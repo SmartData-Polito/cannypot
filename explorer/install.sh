@@ -11,7 +11,6 @@ fi
 # where things are installed
 PREFIX=$(realpath $1)
 mkdir -p $PREFIX
-
 cd $PREFIX
 
 # Install libvirt and requirements
