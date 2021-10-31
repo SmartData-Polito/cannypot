@@ -52,7 +52,7 @@ ssh root@localhost -p 2222
 
 ### CannyPot configurations
 
-See next section to know how to use **reinforcement learning** mode!
+See this section to know how to use **reinforcement learning** mode!
 
 Inside `cowrie/etc/cowrie.cfg` you can find all variables to configure to work in rl mode.
 
@@ -78,7 +78,7 @@ This script:
 1. Build a sample VM as backend system
 2. Run the explorer
 
-Other backend systems can be provided manually (instruction below). If you neeed to run the backend system manually, run:
+Other backend systems can be provided manually (instruction below). If you need to run the backend system manually, run:
 
 ```
 python explorer/CannyExplorer.py
