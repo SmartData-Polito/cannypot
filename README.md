@@ -50,7 +50,7 @@ cowrie-learner/bin/cowrie start
 ssh root@localhost -p 2222
 ```
 
-### Cannypot configurations
+### CannyPot configurations
 
 See next section to know how to use **reinforcement learning** mode!
 
@@ -59,7 +59,7 @@ Inside `cowrie/etc/cowrie.cfg` you can find all variables to configure to work i
 In particular:
 
 * `reinforcement_mode = true` to work with cowrie+rl. Put false if you want the normal behaviour of cowrie
-* `reinforcement_state = single` to have cannypot saving just the last command as state of rl. Possible options are: 'single', 'multiple', 'multiple_out'
+* `reinforcement_state = single` to have CannyPot saving just the last command as state of rl. Possible options are: 'single', 'multiple', 'multiple_out'
 * `num_entry_states = 1` to select how many last n commands to consider for rl state. Single should be 1, multiple and multiple_out are set to 3 by default
 
 ## Explorer
