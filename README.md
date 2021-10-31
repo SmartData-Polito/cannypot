@@ -71,11 +71,11 @@ The Explorer must be run as **root**. It is recommended to run the Explorer in a
 Run:
 
 ```
-$./explorer/install_explorer.sh PATH
+$./explorer/install_explorer.sh PATH INSTALL_VM
 ```
 
 This script:
-1. Builds a sample VM as backend system (inside `PATH`)
+1. Builds a sample VM as backend system (inside `PATH`) if `INSTALL_VM` is equal to `YES`
 2. Deploys the Explorer at `PATH`
 
 Other backend systems can be provided manually (instructions below).
