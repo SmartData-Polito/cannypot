@@ -27,18 +27,20 @@ In the following we report instructions to install the two components of CannyPo
 The Learner has been tested in Debian-like Linux (e.g., Ubuntu 20.04 or Debian 11). All the installation steps are performed by the script:
 
 ```
-$ ./learner/install_learner.sh
+$ ./learner/install_learner.sh PATH
 ```
 
 Some notices:
+
+* The system will be deployed at `PATH`
 
 * The Learner should be run as a virtual machine, as it is the front-end exposed to attackers.
 
 * The Learner consists of extensions made over the `cowrie` honeypot [[https://github.com/cowrie/cowrie]]. Our additions to Cowrie code base are in the ``learner`` directory. They are copied over the Cowrie base by the installation script. Scripts to provide the exact changes can be found in the ``patch'' folder.
 
-* See the Cowrie installation instructions for further details on how Cowrie is setup. 
+* See the Cowrie installation instructions for further details on how Cowrie is configured.
 
-* To start CannyPot, run 
+* To start CannyPot, run
 
 ```
 cowrie-learner/bin/cowrie start
@@ -52,33 +54,33 @@ ssh root@localhost -p 2222
 
 ### CannyPot configurations
 
-See this section to know how to use **reinforcement learning** mode!
-
-Inside `cowrie/etc/cowrie.cfg` you can find all variables to configure to work in rl mode.
+Inside `cowrie/etc/cowrie.cfg` you can find all variables to configure CannyPot to work in RL mode.
 
 In particular:
 
-* `reinforcement_mode = true` to work with cowrie+rl. Put false if you want the normal behaviour of cowrie
-* `reinforcement_state = single` to have CannyPot saving just the last command as state of rl. Possible options are: 'single', 'multiple', 'multiple_out'
-* `num_entry_states = 1` to select how many last n commands to consider for rl state. Single should be 1, multiple and multiple_out are set to 3 by default
+* `reinforcement_mode = true` sets CannyPot on. Put false if you want the normal behavior of cowrie
+* `reinforcement_state = single` to have CannyPot saving just the last command as state of RL. Possible options are: 'single', 'multiple', 'multiple_out'
+* `num_entry_states = 1` to select how many last n commands to consider for RL state. Single should be 1, multiple and multiple_out are set to 3 by default
 
 ## Explorer
 
-The Explorer must be run as **root**. It is recommended to run the Explorer in a different machine than the Learner. The Explore requires Libvirt to run the backend systems as virutal machines. Thus running the Explorer itself in a VM will result in a slow environment, since the backend systems will also be fired as VMs.
+The Explorer must be run as **root**. It is recommended to run the Explorer in a different machine than the Learner. The Explore requires Libvirt to run the backend systems as virtual machines. Thus running the Explorer itself in a VM will result in a slow environment.
 
 ### Installation
 
 Run:
 
 ```
-$./explorer/install_explorer.sh
+$./explorer/install_explorer.sh PATH
 ```
 
 This script:
-1. Build a sample VM as backend system
-2. Run the explorer
+1. Builds a sample VM as backend system (inside `PATH`)
+2. Deploys the Explorer at `PATH`
 
-Other backend systems can be provided manually (instruction below). If you need to run the backend system manually, run:
+Other backend systems can be provided manually (instructions below).
+
+The Explorer must be started manually. Run:
 
 ```
 python explorer/CannyExplorer.py

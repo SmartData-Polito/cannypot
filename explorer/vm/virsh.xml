@@ -1,5 +1,5 @@
 <network>
-  <name>explorernet</name>
+  <name>honeynet</name>
   <uuid>0bf68fe9-27f1-4409-95c2-17fb3c8b81f4</uuid>
   <forward mode='nat'>
     <nat>
@@ -16,7 +16,7 @@
   <ip address='10.0.0.1' netmask='255.255.255.0'>
     <dhcp>
       <range start='10.0.0.2' end='10.0.0.254'/>
-      <host mac='00:00:00:00:00:AA' name='ubuntu' ip='10.0.0.3'/>
+      <host mac='00:00:00:00:00:AA' name='ubuntu' ip='10.0.0.2'/>
     </dhcp>
   </ip>
 </network>
