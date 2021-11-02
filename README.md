@@ -62,6 +62,14 @@ In particular:
 * `reinforcement_state = single` to have CannyPot saving just the last command as state of RL. Possible options are: 'single', 'multiple', 'multiple_out'
 * `num_entry_states = 1` to select how many last n commands to consider for RL state. Single should be 1, multiple and multiple_out are set to 3 by default
 
+
+To run learner in foreground mode, inside ``bin/cowrie`` add:
+
+```
+COWRIE_STDOUT=yes
+```
+
+
 ## Explorer
 
 The Explorer must be run as **root**. It is recommended to run the Explorer in a different machine than the Learner. The Explore requires Libvirt to run the backend systems as virtual machines. Thus running the Explorer itself in a VM will result in a slow environment.
