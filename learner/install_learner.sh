@@ -29,4 +29,3 @@ pip install --upgrade -r $DIR/requirements.txt
 
 # Copy customized cowrie files as well as the learning
 cp -R $DIR/* $PREFIX/cowrie/
-cat $PREFIX/cowrie/etc/cowrie.cfg.dist >> $PREFIX/cowrie/etc/cowrie.cfg
