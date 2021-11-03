@@ -35,4 +35,4 @@ create_net.sh
 create_vm.sh ubuntu 00:00:00:00:00:AA ubuntu
 ```
 
-These commands will create a virtual network called **e
+These commands will create a virtual network called **explorernet** and a virtual machine inside it with ubuntu.
