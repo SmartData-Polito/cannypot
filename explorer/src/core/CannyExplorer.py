@@ -1,4 +1,4 @@
-from utils import utils
+from hosts import utils
 from twisted.internet import reactor
 from ssh.Transport import ClientTransport
 from ssh.CannyClientFactory import CannyClientFactory
