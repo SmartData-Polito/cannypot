@@ -1,6 +1,6 @@
 from twisted.conch.ssh import connection
 from ssh.Channel import Channel
-from utils import utils
+from hosts import utils
 
 
 class ClientConnection(connection.SSHConnection):

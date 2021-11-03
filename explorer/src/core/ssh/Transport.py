@@ -2,7 +2,7 @@ from twisted.conch.ssh import transport
 from twisted.internet import defer
 from ssh.ClientUserAuth import ClientUserAuth
 from ssh.ClientConnection import ClientConnection
-from utils import utils
+from hosts import utils
 
 
 class ClientTransport(transport.SSHClientTransport):
