@@ -43,7 +43,7 @@ Some notices:
 * To start CannyPot, run
 
 ```
-cowrie-learner/bin/cowrie start
+PATH/cowrie/bin/cowrie start
 ```
 
 * To connect to the honeypot through ssh and send commands, type:
