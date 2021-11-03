@@ -43,4 +43,4 @@ All configuration files are specified into:
 * `explorer/etc/explorer_config.cfg`
 * `explorer/src/core/config/ExplorerConfig.py`
 
-In particular, the Explorer processes commands, which are saved into the ``input`` directory, asks for commands to the backend system, and save the outputs inside the ` ``output`` directory. 
+In particular, the Explorer processes commands, which are saved into the ``input`` directory, asks for commands to the backend system, and save the outputs inside the ``output`` directory. 
