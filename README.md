@@ -98,10 +98,10 @@ python explorer/src/core/CannyExplorer.py
 
 ### Building Backend Systems
 
-The explorer part processes commands, which are saved into the ``input`` directory, asks for commands to the backend system, and save the outputs inside the ` ``output`` directory. These paths can be specified inside the `explorer/etc/explorer_config.cfg` file.
-
 Each VM you want to work with should be created ahead of time and added to the ``explorer/etc/hosts.csv`` file.
-To create them, look at the ``explorer/vm`` directory. For the default behaviour, note these commands in the `explorer/install_explorer.sh` script:
+To create them, information can be found in the ``explorer/vm`` directory.
+
+For the default behaviour, these scripts in the `explorer/install_explorer.sh` script:
 
 ```
 create_net.sh
@@ -109,3 +109,12 @@ create_vm.sh ubuntu 00:00:00:00:00:AA ubuntu
 ```
 
 These commands will create a virtual network called **explorernet** and a virtual machine inside it with ubuntu.
+
+### Explorer configurations
+
+All configuration files are specified into:
+
+* `explorer/etc/explorer_config.cfg`
+* `explorer/src/core/config/ExplorerConfig.py`
+
+In particular, the Explorer processes commands, which are saved into the ``input`` directory, asks for commands to the backend system, and save the outputs inside the ` ``output`` directory. 
