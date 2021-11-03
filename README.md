@@ -43,7 +43,7 @@ Some notices:
 * To start CannyPot, run
 
 ```
-cowrie-learner/bin/cowrie start
+PATH/cowrie/bin/cowrie start
 ```
 
 * To connect to the honeypot through ssh and send commands, type:
@@ -54,7 +54,9 @@ ssh root@localhost -p 2222
 
 ### CannyPot configurations
 
-Inside `cowrie/etc/cowrie.cfg` you can find all variables to configure CannyPot to work in RL mode.
+#### RL mode
+
+Inside `PATH/cowrie/etc/cowrie.cfg` you can find all variables to configure CannyPot to work in RL mode.
 
 In particular:
 
@@ -62,13 +64,13 @@ In particular:
 * `reinforcement_state = single` to have CannyPot saving just the last command as state of RL. Possible options are: 'single', 'multiple', 'multiple_out'
 * `num_entry_states = 1` to select how many last n commands to consider for RL state. Single should be 1, multiple and multiple_out are set to 3 by default
 
+#### Foreground mode
 
-To run learner in foreground mode, inside ``bin/cowrie`` add:
+To run learner in foreground mode, inside ``PATH/cowrie/bin/cowrie`` add:
 
 ```
 COWRIE_STDOUT=yes
 ```
-
 
 ## Explorer
 
