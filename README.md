@@ -98,11 +98,10 @@ python explorer/src/core/CannyExplorer.py
 
 ### Building Backend Systems
 
-The explorer part processes commands, which are saved into the ``input`` directory (the path can be specified inside the `explorer/etc/explorer_config.cfg` file).
-To do so, it asks for commands to other machines, relying on ``libvirt`` and ``qemu``.
+The explorer part processes commands, which are saved into the ``input`` directory, asks for commands to the backend system, and save the outputs inside the ` ``output`` directory. These paths can be specified inside the `explorer/etc/explorer_config.cfg` file.
 
-Each VM you want to work with should be created ahead of time and added to the ``explorer/etc/hosts.csv`` file, which is has 1 entry by default (ubuntu).
-Inside ``explorer/vm`` all code and specifications for the vm can be found and modified if necessary. For the default behaviour, see these commands in the `explorer/install_explorer.sh` script:
+Each VM you want to work with should be created ahead of time and added to the ``explorer/etc/hosts.csv`` file.
+To create them, look at the ``explorer/vm`` directory. For the default behaviour, note these commands in the `explorer/install_explorer.sh` script:
 
 ```
 create_net.sh
