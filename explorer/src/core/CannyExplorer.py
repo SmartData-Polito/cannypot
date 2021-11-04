@@ -20,9 +20,13 @@ class CannyExplorer:
         pathlib.Path(self.output_dir).mkdir(exist_ok=True)
         self.cmds_dir = ExplorerConfig().get('fs', 'input_dir')
         pathlib.Path(self.cmds_dir).mkdir(exist_ok=True)
+        print("ONE")
         self.hosts_list = utils.get_hosts_infos(self.hosts_filename)
+        print("SEC")
         self.loop = task.LoopingCall(self.get_file_fn)
+        print("TERZ")
         self.loop.start(ExplorerConfig().getint('functionality', 'loop_frequency'))
+        print("QUA")
         log_file = ExplorerConfig().get('log', 'explorer_log_file')
         log_dir = ExplorerConfig().get('log', 'explorer_log_dir')
         pathlib.Path(log_dir).mkdir(parents=True, exist_ok=True)
@@ -37,9 +41,12 @@ class CannyExplorer:
         os.remove(self.cmds_dir + '/' + filename)
         for host in self.hosts_list:
             utils.create_vm_snapshot(host['vm_name'])
+            print("CIAO1")
             factory = CannyClientFactory(cmds=cmds, server=host['vm_name'], password=host['password'])
             factory.protocol = ClientTransport
+            print("CIAOO2")
             reactor.connectTCP(host['address'], int(host['port']), factory)
+            print("CIAO 3")
 
     def get_file_fn(self):
         if ExplorerConfig().getboolean('functionality', 'enable_explorer'):
