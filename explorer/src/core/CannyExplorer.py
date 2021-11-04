@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 from hosts import utils
 from twisted.internet import reactor
 from ssh.Transport import ClientTransport
