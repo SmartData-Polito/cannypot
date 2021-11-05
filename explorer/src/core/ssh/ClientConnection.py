@@ -9,6 +9,7 @@ class ClientConnection(connection.SSHConnection):
         self.cmds = cmds
         self.server = server
         connection.SSHConnection.__init__(self)
+        print("[DEBUG] ClientConnection init with cmds", cmds)
 
     def serviceStarted(self):
         print("[DEBUG] 1. Start service for all commands in file")
