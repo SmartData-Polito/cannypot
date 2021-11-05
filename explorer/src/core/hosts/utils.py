@@ -80,7 +80,8 @@ def get_cmds_list(cmds_filename):
 def create_vm_snapshot(vm_name):
     print("Creating snapshot")
     # TODO should delete snapshot if already exists
-    #os.system("virsh snapshot-delete --domain {} --snapshotname {}".format(vm_name, vm_name+"_fresh1"))
+    os.system("virsh snapshot-delete --domain {} --snapshotname {}".format(vm_name, vm_name+"_fresh1"))
+    os.system("virsh shutdown {}".format(vm_name))
     # TODO or should call restore_vm_state if some expection occurs BUT WHERE OCCURS
     os.system("virsh snapshot-create-as --domain {} --name {}".format(vm_name, vm_name+"_fresh1"))
     os.system("virsh start {}".format(vm_name))
