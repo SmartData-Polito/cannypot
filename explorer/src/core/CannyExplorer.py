@@ -44,6 +44,8 @@ class CannyExplorer:
         for host in self.hosts_list:
             print("[DEBUG] 1. Create snapshot")
             utils.create_vm_snapshot(host['vm_name'])
+            print("[DEBUG] HOST VM NAME", host['vm_name'])
+            print("[DEBUG] HOST PASSWORD", host['password'])
             print("[DEBUG] 2. Create CannyClientFactory")
             factory = CannyClientFactory(cmds=cmds, server=host['vm_name'], password=host['password'])
             factory.protocol = ClientTransport
