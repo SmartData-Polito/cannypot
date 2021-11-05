@@ -1,2 +1,2 @@
 address,port,user,password,vm_name
-10.0.0.3,22,root,ubuntu,ubuntu-00-00-00-00-00-AA
+10.0.0.3,22,root,exppasswd,ubuntu

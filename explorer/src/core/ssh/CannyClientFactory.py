@@ -15,7 +15,9 @@ class CannyClientFactory(protocol.ClientFactory):
         if self.retry < 5:
             time.sleep(1)
             self.retry += 1
+            print("Start connector connect")
             connector.connect()
+            print("End connector connect")
 
     def clientConnectionLost(self, connector, reason):
         self.retry = 0

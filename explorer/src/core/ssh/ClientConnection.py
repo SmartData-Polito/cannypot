@@ -15,6 +15,9 @@ class ClientConnection(connection.SSHConnection):
             self.openChannel(Channel(conn=self, cmd=cmd, server=self.server))
 
     def channelClosed(self, channel):
+        print("Closing channel")
         connection.SSHConnection.channelClosed(self, channel)
         if len(self.channels) == 0:
+            print("Starting restoring vm")
             utils.restore_vm_state(self.server)
+            print("Finish restoring vm")
