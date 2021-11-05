@@ -15,7 +15,7 @@ class ClientTransport(transport.SSHClientTransport):
                                            self.factory.password))
 
     def receiveError(self, reasonCode, description):
-        print("Error received")
+        print("[DEBUG]Error received")
         self._log.error(
             "Got remote error, code {code}\nreason: {description}",
             code=reasonCode,
@@ -23,6 +23,6 @@ class ClientTransport(transport.SSHClientTransport):
         )
         print("Restore vm after error received")
         utils.restore_vm_state(self.factory.server)
-        print("Finish restore vm after error received")
+        print("[DEBUG] Finish restore vm after error received")
 
 

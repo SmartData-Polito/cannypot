@@ -54,18 +54,18 @@ def download_unknown_cmds_file(frontends_list):
         try:
             ssh.connect(hostname=frontend_machine_ip, port=frontend_port, username=frontend_host,
                         password=frontend_password, timeout=2)
-            print('Connected to {} \n'.format(frontend_machine_ip))
+            print('[DEBUG] Connected to {} \n'.format(frontend_machine_ip))
             write_log('Connected to {}'.format(frontend_machine_ip))
             ftp = ssh.open_sftp()
             files_list = sorted(ftp.listdir(path=new_commands_directory))
             for file in files_list[:-1]:
                 ftp.get(new_commands_directory + file, tmp_input_dir + file)
                 ftp.remove(new_commands_directory + file)
-                print('Downloaded file {} from {}'.format(file, frontend_machine_ip))
+                print('[DEBUG] Downloaded file {} from {}'.format(file, frontend_machine_ip))
                 write_log('Downloaded file {} from {}'.format(file, frontend_machine_ip))
             ftp.close()
         except (paramiko.BadHostKeyException, paramiko.AuthenticationException, paramiko.SSHException) as e:
-            print('Error in downloading files: {}'.format(e))
+            print('[DEBUG] Error in downloading files: {}'.format(e))
             write_log('Error in downloading files: {}'.format(e))
         finally:
             ftp.close()
@@ -76,7 +76,7 @@ def filter_and_move_files():
     tmp_input_dir = ExplorerConfig().get('file_transfer', 'tmp_input_dir')
     backend_input_dir = ExplorerConfig().get('fs', 'input_dir')
     distinct_files = list()
-    print('Filter equal files and move into {}'.format(backend_input_dir))
+    print('[DEBUG] Filter equal files and move into {}'.format(backend_input_dir))
     write_log('Filter equal files and move into {}'.format(backend_input_dir))
     for file in os.listdir(tmp_input_dir):
         with open(tmp_input_dir + file, 'rb') as file_to_read:
@@ -109,7 +109,7 @@ def upload_outputs_to_frontend(frontends_list):
         frontend_port = frontend['port']
         frontend_host = frontend['user']
         frontend_password = frontend['password']
-        print('Send new outputs to {}'.format(frontend_machine_ip))
+        print('[DEBUG] Send new outputs to {}'.format(frontend_machine_ip))
         write_log('Send new outputs to {}'.format(frontend_machine_ip))
         try:
             ssh.connect(hostname=frontend_machine_ip, port=frontend_port, username=frontend_host,
@@ -121,13 +121,13 @@ def upload_outputs_to_frontend(frontends_list):
                     ftp.chmod(frontend_new_outputs_dir + direc, 0o777)
                     for file in os.listdir(backend_output_dir + direc):
                         ftp.put(backend_output_dir + direc + '/' + file, frontend_new_outputs_dir + direc + '/' + file)
-                        print('Send files {} to {}:{}'.format(file, frontend_machine_ip,
+                        print('[DEBUG] Send files {} to {}:{}'.format(file, frontend_machine_ip,
                                                              frontend_new_outputs_dir + '/' + direc))
                         write_log('Send files {} to {}:{}'.format(file, frontend_machine_ip,
                                                                  frontend_new_outputs_dir + '/' + direc))
                         ftp.chmod(frontend_new_outputs_dir + direc + '/' + file, 0o777)
         except (paramiko.BadHostKeyException, paramiko.AuthenticationException, paramiko.SSHException) as e:
-            print('Error in uploading files: {}'.format(e))
+            print('[DEBUG] Error in uploading files: {}'.format(e))
             write_log('Error in uploading files: {}'.format(e))
         finally:
             ftp.close()
@@ -150,13 +150,13 @@ def write_log(message):
 
 def Main():
     write_log('Starting file transfer service.')
-    print('Starting file transfer service.')
+    print('[DEBUG] Starting file transfer service.')
     frontends_list = get_frontends_list()
     download_unknown_cmds_file(frontends_list)
     filter_and_move_files()
 
     upload_outputs_to_frontend(frontends_list)
-    write_log('Finished file transfer routine')
+    write_log('[DEBUG] Finished file transfer routine')
     print('Finished file transfer routine')
 
 

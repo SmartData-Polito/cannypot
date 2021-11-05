@@ -20,42 +20,43 @@ class CannyExplorer:
         pathlib.Path(self.output_dir).mkdir(exist_ok=True)
         self.cmds_dir = ExplorerConfig().get('fs', 'input_dir')
         pathlib.Path(self.cmds_dir).mkdir(exist_ok=True)
-        print("Obtain hosts info")
+        print("[DEBUG] Obtain hosts info")
         self.hosts_list = utils.get_hosts_infos(self.hosts_filename)
-        print("Start looping call")
+        print("[DEBUG] Start looping call")
         self.loop = task.LoopingCall(self.get_file_fn)
-        print("Start loop")
+        print("[DEBUG] Start loop")
         self.loop.start(ExplorerConfig().getint('functionality', 'loop_frequency'))
-        print("Finish loop")
+        print("[DEBUG] Finish loop")
         log_file = ExplorerConfig().get('log', 'explorer_log_file')
         log_dir = ExplorerConfig().get('log', 'explorer_log_dir')
         pathlib.Path(log_dir).mkdir(parents=True, exist_ok=True)
         # TODO strange date format: to fix logs (maybe without twisted rotation)
         log.startLogging(DailyLogFile.fromFullPath(log_file))
-        print("Started logging")
+        print("[DEBUG] Started logging")
         # day = time.strftime("%Y%m%d")
         # log.startLogging(open(log_file + "." + day, 'w'))
         reactor.run()
+        print("[DEBUG] Finish reactor run")
 
     def produce_outputs_for_file(self, filename):
         cmds = utils.get_cmds_list(self.cmds_dir + '/' + filename)
         os.remove(self.cmds_dir + '/' + filename)
         for host in self.hosts_list:
-            print("Create snapshot")
+            print("[DEBUG] Create snapshot")
             utils.create_vm_snapshot(host['vm_name'])
-            print("Create CannyClientFactory")
+            print("[DEBUG] Create CannyClientFactory")
             factory = CannyClientFactory(cmds=cmds, server=host['vm_name'], password=host['password'])
             factory.protocol = ClientTransport
-            print("Starting reactor connection TCP")
+            print("[DEBUG] Starting reactor connection TCP")
             reactor.connectTCP(host['address'], int(host['port']), factory)
-            print("Finish reactor connection TCP")
+            print("[DEBUG] Finish reactor connection TCP")
 
     def get_file_fn(self):
         if ExplorerConfig().getboolean('functionality', 'enable_explorer'):
             input_dir = ExplorerConfig().get('fs', 'input_dir')
             files_list = sorted(os.listdir(path=input_dir))
             if files_list:
-                print("Start producing outputs for", files_list[0])
+                print("[DEBUG] Start producing outputs for", files_list[0])
                 self.produce_outputs_for_file(files_list[0])
 
 
