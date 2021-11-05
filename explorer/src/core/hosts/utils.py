@@ -79,7 +79,7 @@ def get_cmds_list(cmds_filename):
 
 
 def create_vm_snapshot(vm_name):
-    print("[DEBUG] Creating snapshot")
+    print("[DEBUG] 1. Creating snapshot")
     # TODO should delete snapshot if already exists
     #os.system("virsh snapshot-delete --domain {} --snapshotname {}".format(vm_name, vm_name+"_fresh1"))
     #os.system("virsh shutdown {}".format(vm_name))
@@ -88,16 +88,16 @@ def create_vm_snapshot(vm_name):
     time.sleep(2)
     os.system("virsh start {}".format(vm_name))
     time.sleep(2)
-    print("[DEBUG] Snapshot created and domain started")
+    print("[DEBUG] 2. Snapshot created and domain started")
 
 
 def restore_vm_state(vm_name):
-    print("[DEBUG] Restore vm state and delete snapshot")
+    print("[DEBUG] 1. Restore vm state and delete snapshot")
     os.system("virsh shutdown {}".format(vm_name))
     time.sleep(3)
     os.system("virsh snapshot-revert --domain {}  --snapshotname {}".format(vm_name, vm_name+"_fresh1"))
     time.sleep(2)
     os.system("virsh snapshot-delete --domain {} --snapshotname {}".format(vm_name, vm_name+"_fresh1"))
     time.sleep(2)
-    print("[DEBUG] Domain shutdown and snapshot reverted and deleted")
+    print("[DEBUG] 2. Domain shutdown and snapshot reverted and deleted")
 

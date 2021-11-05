@@ -11,18 +11,20 @@ class ClientTransport(transport.SSHClientTransport):
         return defer.succeed(1)
 
     def connectionSecure(self):
+        print("[DEBUG] 1. Connection secure")
         self.requestService(ClientUserAuth('root', ClientConnection(self.factory.cmds, self.factory.server),
                                            self.factory.password))
+        print("[DEBUG] 2. Connection secure finish")
 
     def receiveError(self, reasonCode, description):
-        print("[DEBUG]Error received")
+        print("[DEBUG] 1. Error received")
         self._log.error(
             "Got remote error, code {code}\nreason: {description}",
             code=reasonCode,
             description=description,
         )
-        print("Restore vm after error received")
+        print("[DEBUG] 2. Restore vm after error received")
         utils.restore_vm_state(self.factory.server)
-        print("[DEBUG] Finish restore vm after error received")
+        print("[DEBUG] 3. Finish restore vm after error received")
 
 

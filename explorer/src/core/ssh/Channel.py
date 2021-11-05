@@ -28,7 +28,7 @@ class Channel(channel.SSHChannel):
         channel.SSHChannel.__init__(self, conn=conn)
 
     def channelOpen(self, data):
-        print("[DEBUG] Start opening channel")
+        print("[DEBUG] 1. Start opening channel")
         self.catData = b''
         tty_utils.ttylog_open(self.ttylogFile, time.time())
         term = os.environ.get('TERM', 'xterm')
@@ -38,7 +38,7 @@ class Channel(channel.SSHChannel):
         d = self.conn.sendRequest(self, 'exec', common.NS(self.cmd['complete_cmd']),
                                   wantReply=1)
         d.addCallback(self._cbSendRequest)
-        print("[DEBUG] Channel open (?)")
+        print("[DEBUG] 2. Channel open (?)")
 
     def _cbSendRequest(self, ignored):
         self.conn.sendEOF(self)

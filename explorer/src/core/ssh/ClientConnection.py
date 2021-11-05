@@ -11,13 +11,15 @@ class ClientConnection(connection.SSHConnection):
         connection.SSHConnection.__init__(self)
 
     def serviceStarted(self):
+        print("[DEBUG] 1. Start service for all commands in file")
         for cmd in self.cmds:
+            print("[DEBUG] Service started client connection for 1 command")
             self.openChannel(Channel(conn=self, cmd=cmd, server=self.server))
 
     def channelClosed(self, channel):
-        print("[DEBUG] Closing channel")
+        print("[DEBUG] 1. Closing channel")
         connection.SSHConnection.channelClosed(self, channel)
         if len(self.channels) == 0:
-            print("[DEBUG] Starting restoring vm")
+            print("[DEBUG] 2. Starting restoring vm")
             utils.restore_vm_state(self.server)
-            print("[DEBUG] Finish restoring vm")
+            print("[DEBUG] 3. Finish restoring vm")
