@@ -85,11 +85,19 @@ def create_vm_snapshot(vm_name):
     #os.system("virsh shutdown {}".format(vm_name))
     # TODO or should call restore_vm_state if some expection occurs BUT WHERE OCCURS
     os.system("virsh snapshot-create-as --domain {} --name {}".format(vm_name, vm_name+"_fresh1"))
+    time.sleep(2)
     os.system("virsh start {}".format(vm_name))
+    time.sleep(2)
+    print("[DEBUG] Snapshot created and domain started")
 
 
 def restore_vm_state(vm_name):
     print("[DEBUG] Restore vm state and delete snapshot")
     os.system("virsh shutdown {}".format(vm_name))
+    time.sleep(3)
     os.system("virsh snapshot-revert --domain {}  --snapshotname {}".format(vm_name, vm_name+"_fresh1"))
+    time.sleep(2)
     os.system("virsh snapshot-delete --domain {} --snapshotname {}".format(vm_name, vm_name+"_fresh1"))
+    time.sleep(2)
+    print("[DEBUG] Domain shutdown and snapshot reverted and deleted")
+
