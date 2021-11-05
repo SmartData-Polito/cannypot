@@ -59,6 +59,7 @@ def get_hosts_infos(filename):
             host['password'] = row[3]
             host['vm_name'] = row[4]
             hosts.append(host)
+    print("[DEBUG] Hosts:", hosts)
     return hosts
 
 
