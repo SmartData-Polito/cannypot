@@ -10,6 +10,7 @@ class CannyClientFactory(protocol.ClientFactory):
         self.password = password
         protocol.ClientFactory.__init__(self)
         self.retry = 0
+        print("[DEBUG] CannyClientFactory init with cmds", cmds)
 
     def clientConnectionFailed(self, connector, reason):
         if self.retry < 5:
@@ -26,3 +27,5 @@ class CannyClientFactory(protocol.ClientFactory):
     def startedConnecting(self, connector):
         print("[DEBUG] Started connecting")
         self.retry = 0
+
+# TODO What if something here fails? Should destroy vm!??
