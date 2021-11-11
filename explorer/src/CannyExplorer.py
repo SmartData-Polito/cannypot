@@ -16,24 +16,30 @@ class CannyExplorer:
     def __init__(self):
 
         # initialize the log system
+        log_file = ExplorerConfig().get('log', 'explorer_log_file')
+        log_dir = ExplorerConfig().get('log', 'explorer_log_dir')
+        pathlib.Path(log_dir).mkdir(parents=True, exist_ok=True)
+        log.startLogging(DailyLogFile.fromFullPath(log_file))
 
-        self.hosts_filename = ExplorerConfig().get('fs', 'host_filename')
+
+        # read the list of backend hosts
+        backend_conf = ExplorerConfig().get('backend', 'hosts')
+        self.hosts_list = utils.get_hosts_infos(backend_conf)
+
+        # config the input / output folders
+
         self.output_dir = ExplorerConfig().get('fs', 'output_dir')
         pathlib.Path(self.output_dir).mkdir(exist_ok=True)
         self.cmds_dir = ExplorerConfig().get('fs', 'input_dir')
         pathlib.Path(self.cmds_dir).mkdir(exist_ok=True)
-        print("[DEBUG] 11. Obtain hosts info")
-        self.hosts_list = utils.get_hosts_infos(self.hosts_filename)
+
+
         print("[DEBUG] 22. Start looping call")
         self.loop = task.LoopingCall(self.get_file_fn)
         print("[DEBUG] 33. Start loop")
         self.loop.start(ExplorerConfig().getint('functionality', 'loop_frequency'))
         print("[DEBUG] 44. Finish loop")
-        log_file = ExplorerConfig().get('log', 'explorer_log_file')
-        log_dir = ExplorerConfig().get('log', 'explorer_log_dir')
-        pathlib.Path(log_dir).mkdir(parents=True, exist_ok=True)
-        # TODO strange date format: to fix logs (maybe without twisted rotation)
-        log.startLogging(DailyLogFile.fromFullPath(log_file))
+
         print("[DEBUG] 55. Started logging")
         # day = time.strftime("%Y%m%d")
         # log.startLogging(open(log_file + "." + day, 'w'))
@@ -66,3 +72,5 @@ class CannyExplorer:
 
 if __name__ == "__main__":
     CannyExplorer()
+    print("[DEBUG] 4. Finish reactor connection TCP")
+
