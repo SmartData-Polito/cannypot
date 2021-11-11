@@ -1,20 +1,22 @@
 #!/usr/bin/python
 
+import os
+import time
+import pathlib
 from hosts import utils
-from twisted.internet import reactor
+from config.ExplorerConfig import ExplorerConfig
 from ssh.Transport import ClientTransport
 from ssh.CannyClientFactory import CannyClientFactory
-import os
-import pathlib
 from twisted.python import log
 from twisted.internet import task
-from config.ExplorerConfig import ExplorerConfig
+from twisted.internet import reactor
 from twisted.python.logfile import DailyLogFile
-import time
-
 
 class CannyExplorer:
     def __init__(self):
+
+        # initialize the log system
+
         self.hosts_filename = ExplorerConfig().get('fs', 'host_filename')
         self.output_dir = ExplorerConfig().get('fs', 'output_dir')
         pathlib.Path(self.output_dir).mkdir(exist_ok=True)

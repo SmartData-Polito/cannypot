@@ -1,7 +1,6 @@
 import configparser
 from os.path import abspath, dirname, exists, join
 
-
 class ExplorerConfig(object):
     __instance = None
 
@@ -12,12 +11,11 @@ class ExplorerConfig(object):
             ExplorerConfig.__instance.read(get_config_path())
         return ExplorerConfig.__instance
 
-
 def get_config_path():
     """
     Get absolute path to the config file
     """
-    config_files = ["/home/cowrie/cannypot/explorer/etc/explorer_config.cfg"]
+    config_files = ["etc/explorer.cfg"]
     found_confs = [path for path in config_files if exists(path)]
 
     if found_confs:
