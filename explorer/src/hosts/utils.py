@@ -82,6 +82,7 @@ def get_cmds_list(cmds_filename):
 def create_vm_snapshot(vm_name, log):
     log.msg(vm_name, " - creating backend snapshot")
 
+    # connect to virsh backend
     conn = None
     try:
         conn = libvirt.open("qemu:///system")
@@ -96,11 +97,24 @@ def create_vm_snapshot(vm_name, log):
         log.msg(repr(e))
         return False
 
-    flag = dom.isActive()
-    if flag == True:
-        log.msg('The domain is active.')
-    else:
-        log.msg('The domain is not active.')
+    # shut the VM down
+    i = 0
+    while dom.isActive():
+        if i = 0:
+            log.msg(vm_name, " - domain active shutting it down")
+            dom.shutdown()
+        elif i = 60:
+            dom.destroy()
+        time.sleep(1)
+        i += 1
+
+    # check if snapshot exists and deletes it in case
+
+    # create a new snapshot
+
+    # run the commands
+
+    # delete the snapshot and shutdown the machine
 
     return True
 
