@@ -19,7 +19,7 @@ Other backend systems can be provided manually (instructions below).
 The Explorer must be started manually. Run:
 
 ```
-python explorer/src/CannyExplorer.py
+python PATH/src/CannyExplorer.py
 ```
 
 ## Building Backend Systems
