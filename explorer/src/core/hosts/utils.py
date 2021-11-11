@@ -23,7 +23,7 @@ def produce_output(host, port, username, password, command):
 
 
 def get_args():
-    hosts_filename = 'hosts.csv'
+    hosts_filename = 'hosts.cfg'
     cmds_dir = 'input'
     output_dir = None
     argument_list = sys.argv[1:]

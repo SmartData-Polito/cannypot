@@ -36,3 +36,7 @@ virtualenv --python=python3 cannypot-env
 source cannypot-env/bin/activate
 pip install --upgrade pip
 pip install --upgrade -r $DIR/requirements.txt
+
+# copy explorer files
+mkdir -p $PREFIX/explorer
+cp -r $DIR/etc $DIR/src $DIR/bin $PREFIX/explorer
