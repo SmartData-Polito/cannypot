@@ -1,0 +1,9 @@
+#!/bin/bash
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+DEFAULT_VIRTUAL_ENV=cannypot-env
+ROOTDIR=$(realpath $DIR/../../)
+
+source $ROOTDIR/$DEFAULT_VIRTUAL_ENV/bin/activate
+
+$ROOTDIR/explorer/src/core/CannyExplorer.py
