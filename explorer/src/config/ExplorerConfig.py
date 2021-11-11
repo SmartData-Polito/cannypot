@@ -13,12 +13,10 @@ class ExplorerConfig(object):
 
 def get_config_path():
     """
-    Get absolute path to the config file
+    Get path to the config file
     """
     config_files = ["etc/explorer.cfg"]
     found_confs = [path for path in config_files if exists(path)]
 
     if found_confs:
         return found_confs
-
-    print("Config file not found")

@@ -4,6 +4,7 @@ import getopt
 import csv
 import os
 import time
+import libvirt
 
 
 def produce_output(host, port, username, password, command):
@@ -78,17 +79,41 @@ def get_cmds_list(cmds_filename):
     return cmds
 
 
-def create_vm_snapshot(vm_name):
-    print("[DEBUG] 1. Creating snapshot")
-    # TODO should delete snapshot if already exists
+def create_vm_snapshot(vm_name, log):
+    log.msg(vm_name, " - creating backend snapshot")
+
+    conn = None
+    try:
+        conn = libvirt.open("qemu:///system")
+    except libvirt.libvirtError as e:
+        log.msg(repr(e))
+        return False
+
+    dom = None
+    try:
+        dom = conn.lookupByName(vm_name)
+    except libvirt.libvirtError as e:
+        log.msg(repr(e))
+        return False
+
+    flag = dom.isActive()
+    if flag == True:
+        log.msg('The domain is active.')
+    else:
+        log.msg('The domain is not active.')
+
+    return True
+
+
+    ## TODO should delete snapshot if already exists
     #os.system("virsh snapshot-delete --domain {} --snapshotname {}".format(vm_name, vm_name+"_fresh1"))
-    #os.system("virsh shutdown {}".format(vm_name))
-    # TODO or should call restore_vm_state if some expection occurs BUT WHERE OCCURS
-    os.system("virsh snapshot-create-as --domain {} --name {}".format(vm_name, vm_name+"_fresh1"))
-    time.sleep(2)
-    os.system("virsh start {}".format(vm_name))
-    time.sleep(2)
-    print("[DEBUG] 2. Snapshot created and domain started")
+    ##os.system("virsh shutdown {}".format(vm_name))
+    ## TODO or should call restore_vm_state if some expection occurs BUT WHERE OCCURS
+    #os.system("virsh snapshot-create-as --domain {} --name {}".format(vm_name, vm_name+"_fresh1"))
+    #time.sleep(2)
+    #os.system("virsh start {}".format(vm_name))
+    #time.sleep(2)
+    #log.msg(vm_name, " - snapshot created and domain started")
 
 
 def restore_vm_state(vm_name):
