@@ -14,7 +14,7 @@ MAC=$2
 PASSWORD=$3
 INSTPATH=$4
 
-rm /tmp/preseed.cfg
+rm -rf /tmp/preseed.cfg
 cat $DIR/preseed.cfg | sed s/PASSWORD/$PASSWORD/g > /tmp/preseed.cfg
 
 virt-install \

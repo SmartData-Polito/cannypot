@@ -5,7 +5,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 if [ "$#" -ne 1 ] && [ "$#" -ne 2 ]; then
     echo "Missing parameters. Usage: install_explorer.sh PREFIX INSTALL_VM"
-    echo "INSTALL_VM can be YES or NO (default)"
+    echo "INSTALL_VM can be YES or NO (default). Install a sample VM in the backend."
     exit 1
 fi
 

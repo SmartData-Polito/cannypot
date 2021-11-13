@@ -78,9 +78,20 @@ def get_cmds_list(cmds_filename):
         cmds_file.close()
     return cmds
 
+def shutoff_vm(vm_name, dom, log):
+    i = 0
+    while dom.isActive():
+        if i == 0:
+            log.msg(vm_name, "domain active, shutting it down")
+            dom.shutdown()
+        elif i == 60:
+            log.msg(vm_name, "forcing shutdown after 60s")
+            dom.destroy()
+        time.sleep(1)
+        i += 1
 
 def create_vm_snapshot(vm_name, log):
-    log.msg(vm_name, " - creating backend snapshot")
+    log.msg(vm_name, "creating backend snapshot")
 
     # connect to virsh backend
     conn = None
@@ -97,37 +108,36 @@ def create_vm_snapshot(vm_name, log):
         log.msg(repr(e))
         return False
 
+    # shut the VM down if it remained active during last cycle
+    shutoff_vm(vm_name, dom, log)
+
+
+    # check if current snapshot exists and creates one otherwise
+    try:
+        snap = dom.snapshotLookupByName("clean_vm_state")
+        log.msg(vm_name, "already has a clean_vm_state snapshot")
+    except libvirt.libvirtError as e:
+        log.msg(vm_name, "has not a clean_vm_state snapshot")
+        SNAPSHOT_XML_TEMPLATE = """<domainsnapshot>
+                                      <name>{snapshot_name}</name>
+                                    </domainsnapshot>
+                                """
+        dom.snapshotCreateXML(
+          SNAPSHOT_XML_TEMPLATE.format(snapshot_name="clean_vm_state"),
+                  libvirt.VIR_DOMAIN_SNAPSHOT_CREATE_ATOMIC
+        )
+        snap = dom.snapshotLookupByName("clean_vm_state")
+
+    # TODO: run the commands
+
     # shut the VM down
-    i = 0
-    while dom.isActive():
-        if i = 0:
-            log.msg(vm_name, " - domain active shutting it down")
-            dom.shutdown()
-        elif i = 60:
-            dom.destroy()
-        time.sleep(1)
-        i += 1
+    shutoff_vm(vm_name, dom, log)
 
-    # check if snapshot exists and deletes it in case
-
-    # create a new snapshot
-
-    # run the commands
-
-    # delete the snapshot and shutdown the machine
+    # revert to the snapshot
+    log.msg(vm_name, "reverting to clean_vm_state")
+    dom.revertToSnapshot(snap)
 
     return True
-
-
-    ## TODO should delete snapshot if already exists
-    #os.system("virsh snapshot-delete --domain {} --snapshotname {}".format(vm_name, vm_name+"_fresh1"))
-    ##os.system("virsh shutdown {}".format(vm_name))
-    ## TODO or should call restore_vm_state if some expection occurs BUT WHERE OCCURS
-    #os.system("virsh snapshot-create-as --domain {} --name {}".format(vm_name, vm_name+"_fresh1"))
-    #time.sleep(2)
-    #os.system("virsh start {}".format(vm_name))
-    #time.sleep(2)
-    #log.msg(vm_name, " - snapshot created and domain started")
 
 
 def restore_vm_state(vm_name):

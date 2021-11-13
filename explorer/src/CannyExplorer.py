@@ -4,15 +4,22 @@ import os
 import time
 import pathlib
 from hosts import utils
-from config.ExplorerConfig import ExplorerConfig
+
 from ssh.Transport import ClientTransport
+from config.ExplorerConfig import ExplorerConfig
 from ssh.CannyClientFactory import CannyClientFactory
+
 from twisted.python import log
-from twisted.internet import task
-from twisted.internet import reactor
 from twisted.python.logfile import DailyLogFile
+from twisted.python import filepath
+
+from twisted.internet import task
+from twisted.internet import defer
+from twisted.internet import reactor
+from twisted.internet import inotify
 
 class CannyExplorer:
+
     def __init__(self):
 
         root_path = os.path.abspath(os.path.dirname(__file__))
@@ -29,39 +36,47 @@ class CannyExplorer:
 
         # config the input / output folders
         self.output_dir = root_path + "/" + ExplorerConfig().get('backend', 'output_dir')
-        pathlib.Path(self.output_dir).mkdir(parents=True, exist_ok=True)
         self.input_dir = root_path + "/" + ExplorerConfig().get('backend', 'input_dir')
+        pathlib.Path(self.output_dir).mkdir(parents=True, exist_ok=True)
         pathlib.Path(self.input_dir).mkdir(parents=True, exist_ok=True)
 
-        self.loop = task.LoopingCall(self.get_file_fn)
-        self.loop.start(ExplorerConfig().getint('general', 'loop_frequency'))
+        # load all files already in the input folder
+        self.file_queue = defer.DeferredQueue()
+        for input in os.listdir(path=self.input_dir):
+            self.file_queue.put(input)
 
-        log.msg("Explorer setup completed")
+        # register to inotify to watch the folder for more files
+        notifier = inotify.INotify()
+        notifier.startReading()
+        notifier.watch(filepath.FilePath(self.input_dir), callbacks=[self.notify])
 
+        log.msg("explorer setup completed")
         reactor.run()
 
-    def produce_outputs_for_file(self, filename):
-        cmds = utils.get_cmds_list(self.input_dir + '/' + filename)
-        for host in self.hosts_list:
-            utils.create_vm_snapshot(host['vm_name'], log)
-            continue
+    def generic_error(self, err):
+        log.msg(err)
+
+    def process_file(self, file_path):
+        log.msg("process_file")
+        pass
+
+        #cmds = utils.get_cmds_list(self.input_dir + '/' + filename)
+        #for host in self.hosts_list:
+            #if utils.create_vm_snapshot(host['vm_name'], log):
+                #os.remove(self.input_dir + '/' + filename)
+
+        #factory = CannyClientFactory(cmds=cmds, server=host['vm_name'], password=host['password'])
+        #factory.protocol = ClientTransport
+        #log.msg(host['vm_name'], " - connecting to backend on ", host['address'], host['port'])
+        #reactor.connectTCP(host['address'], int(host['port']), factory)
+        #log.msg(host['vm_name'], " - complete backend cycle")
 
 
-            factory = CannyClientFactory(cmds=cmds, server=host['vm_name'], password=host['password'])
-            factory.protocol = ClientTransport
-            log.msg(host['vm_name'], " - connecting to backend on ", host['address'], host['port'])
-            reactor.connectTCP(host['address'], int(host['port']), factory)
-            log.msg(host['vm_name'], " - complete backend cycle")
-        os.remove(self.input_dir + '/' + filename)
+    def notify(self, ignored, filepath, mask):
+        if mask == 256:
+            self.file_queue.put(filepath)
+            log.msg("adding new file to processing queue %s " % filepath)
 
-    def get_file_fn(self):
-        log.msg("starting an explorer cycle")
-        if ExplorerConfig().getboolean('general', 'enable_explorer'):
-            files_list = sorted(os.listdir(path=self.input_dir))
-            if files_list:
-                log.msg("start producing outputs for file: ", files_list[0])
-                self.produce_outputs_for_file(files_list[0])
-        log.msg("complete an explorer cycle")
 
 if __name__ == "__main__":
     CannyExplorer()
