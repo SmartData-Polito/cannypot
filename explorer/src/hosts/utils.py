@@ -129,6 +129,7 @@ def create_vm_snapshot(vm_name, log):
         snap = dom.snapshotLookupByName("clean_vm_state")
 
     # TODO: run the commands
+    time.sleep(10)
 
     # shut the VM down
     shutoff_vm(vm_name, dom, log)

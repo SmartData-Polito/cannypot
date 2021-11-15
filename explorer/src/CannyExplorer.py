@@ -18,11 +18,18 @@ from twisted.internet import defer
 from twisted.internet import reactor
 from twisted.internet import inotify
 
+from twisted.protocols import basic
+from twisted.internet import reactor
+from twisted.internet.protocol import ServerFactory
+
 class CannyExplorer:
 
     def __init__(self):
 
         root_path = os.path.abspath(os.path.dirname(__file__))
+
+        # paths to be processed
+        self.paths = []
 
         # initialize the log system
         log_dir = root_path + "/" + ExplorerConfig().get('log', 'explorer_log_dir')
@@ -41,9 +48,10 @@ class CannyExplorer:
         pathlib.Path(self.input_dir).mkdir(parents=True, exist_ok=True)
 
         # load all files already in the input folder
-        self.file_queue = defer.DeferredQueue()
-        for input in os.listdir(path=self.input_dir):
-            self.file_queue.put(input)
+
+        for filename in os.listdir(path=self.input_dir):
+            log.msg("adding new file to processing queue %s " % filename)
+            self.paths.append(filename)
 
         # register to inotify to watch the folder for more files
         notifier = inotify.INotify()
@@ -51,32 +59,46 @@ class CannyExplorer:
         notifier.watch(filepath.FilePath(self.input_dir), callbacks=[self.notify])
 
         log.msg("explorer setup completed")
+        reactor.callLater(10, self.process_file)
+        reactor.addSystemEventTrigger('before', 'shutdown', self.shutdown_process)
         reactor.run()
 
     def generic_error(self, err):
         log.msg(err)
 
-    def process_file(self, file_path):
-        log.msg("process_file")
-        pass
-
-        #cmds = utils.get_cmds_list(self.input_dir + '/' + filename)
-        #for host in self.hosts_list:
-            #if utils.create_vm_snapshot(host['vm_name'], log):
-                #os.remove(self.input_dir + '/' + filename)
-
-        #factory = CannyClientFactory(cmds=cmds, server=host['vm_name'], password=host['password'])
-        #factory.protocol = ClientTransport
-        #log.msg(host['vm_name'], " - connecting to backend on ", host['address'], host['port'])
-        #reactor.connectTCP(host['address'], int(host['port']), factory)
-        #log.msg(host['vm_name'], " - complete backend cycle")
-
-
-    def notify(self, ignored, filepath, mask):
+    def notify(self, ignored, filename, mask):
         if mask == 256:
-            self.file_queue.put(filepath)
-            log.msg("adding new file to processing queue %s " % filepath)
+            self.paths.append(filename)
+            reactor.callLater(0, self.process_file)
 
+    def shutdown_process(self):
+        log.msg("explorer is shutting down (wait)")
+
+
+    def process_file(self):
+        if self.paths and reactor.running:
+            # Get the first path from the queue
+            filename = self.paths[0]
+
+            log.msg("processing %s queue size %d" % (str(filename), len(self.paths)))
+
+            for host in self.hosts_list:
+                if utils.create_vm_snapshot(host['vm_name'], log):
+                    os.remove(self.input_dir + '/' + filename)
+
+            #factory = CannyClientFactory(cmds=cmds, server=host['vm_name'], password=host['password'])
+            #factory.protocol = ClientTransport
+            #log.msg(host['vm_name'], " - connecting to backend on ", host['address'], host['port'])
+            #reactor.connectTCP(host['address'], int(host['port']), factory)
+            #log.msg(host['vm_name'], " - complete backend cycle")
+
+            del self.paths[0]
+            log.msg("finished %s queue size %d" % (str(filename), len(self.paths)))
+
+            # Schedule this function to do more work, if there's still work
+            # to be done.
+            if self.paths:
+                reactor.callLater(0, self.process_file)
 
 if __name__ == "__main__":
     CannyExplorer()
