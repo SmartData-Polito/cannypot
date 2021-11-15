@@ -5,9 +5,7 @@ import time
 import pathlib
 from hosts import utils
 
-from ssh.Transport import ClientTransport
 from config.ExplorerConfig import ExplorerConfig
-from ssh.CannyClientFactory import CannyClientFactory
 
 from twisted.python import log
 from twisted.python.logfile import DailyLogFile
@@ -17,10 +15,6 @@ from twisted.internet import task
 from twisted.internet import defer
 from twisted.internet import reactor
 from twisted.internet import inotify
-
-from twisted.protocols import basic
-from twisted.internet import reactor
-from twisted.internet.protocol import ServerFactory
 
 class CannyExplorer:
 
@@ -39,7 +33,7 @@ class CannyExplorer:
 
         # read the list of backend hosts
         backend_conf = ExplorerConfig().get('backend', 'hosts')
-        self.hosts_list = utils.get_hosts_infos(backend_conf)
+        self.hosts_list = utils.get_hosts_infos(backend_conf, log)
 
         # config the input / output folders
         self.output_dir = root_path + "/" + ExplorerConfig().get('backend', 'output_dir')
@@ -51,7 +45,7 @@ class CannyExplorer:
 
         for filename in os.listdir(path=self.input_dir):
             log.msg("adding new file to processing queue %s " % filename)
-            self.paths.append(filename)
+            self.paths.append(filepath.FilePath(self.input_dir + filename))
 
         # register to inotify to watch the folder for more files
         notifier = inotify.INotify()
@@ -59,9 +53,9 @@ class CannyExplorer:
         notifier.watch(filepath.FilePath(self.input_dir), callbacks=[self.notify])
 
         log.msg("explorer setup completed")
-        reactor.callLater(10, self.process_file)
-        reactor.addSystemEventTrigger('before', 'shutdown', self.shutdown_process)
-        reactor.run()
+        reactor.callLater(2, self.process_file)
+        reactor.addSystemEventTrigger('before', 'persist', self.shutdown_process)
+        reactor.run(installSignalHandlers=True)
 
     def generic_error(self, err):
         log.msg(err)
@@ -74,31 +68,34 @@ class CannyExplorer:
     def shutdown_process(self):
         log.msg("explorer is shutting down (wait)")
 
-
     def process_file(self):
-        if self.paths and reactor.running:
+        if self.paths:
             # Get the first path from the queue
-            filename = self.paths[0]
+            filename = self.paths[0].path
 
-            log.msg("processing %s queue size %d" % (str(filename), len(self.paths)))
+            log.msg("processing %s queue size %d" % (filename, len(self.paths)))
 
             for host in self.hosts_list:
-                if utils.create_vm_snapshot(host['vm_name'], log):
-                    os.remove(self.input_dir + '/' + filename)
+                domain = utils.create_vm_snapshot(host, filename, log, reactor)
+                if domain:
+                    factory = CannyClientFactory(host, get_cmds_list(filename), log)
+                    factory.protocol = ClientTransport
+                    log.msg(host['vm_name'], " - connecting to backend on ", host['address'], host['port'])
+                    reactor.connectTCP(host['address'], int(host['port']), factory)
+                    log.msg(host['vm_name'], " - complete backend cycle")
 
-            #factory = CannyClientFactory(cmds=cmds, server=host['vm_name'], password=host['password'])
-            #factory.protocol = ClientTransport
-            #log.msg(host['vm_name'], " - connecting to backend on ", host['address'], host['port'])
-            #reactor.connectTCP(host['address'], int(host['port']), factory)
-            #log.msg(host['vm_name'], " - complete backend cycle")
+                    if False:
+                        # shut the VM down
+                        utils.shutoff_vm(host['vm_name'], domain, log)
+                        os.remove(filename)
+                        log.msg("removing %s " % filename)
 
             del self.paths[0]
-            log.msg("finished %s queue size %d" % (str(filename), len(self.paths)))
+            log.msg("finished %s queue size %d" % (filename, len(self.paths)))
 
-            # Schedule this function to do more work, if there's still work
-            # to be done.
+            # Schedule this function to do more work
             if self.paths:
                 reactor.callLater(0, self.process_file)
 
 if __name__ == "__main__":
-    CannyExplorer()
+    cannypot = CannyExplorer()

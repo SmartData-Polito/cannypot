@@ -6,6 +6,8 @@ import os
 import time
 import libvirt
 
+from ssh.Transport import ClientTransport
+from ssh.CannyClientFactory import CannyClientFactory
 
 def produce_output(host, port, username, password, command):
     print("[DEBUG] Creating paramiko client")
@@ -22,32 +24,7 @@ def produce_output(host, port, username, password, command):
     stdin, stdout, stderr = ssh.exec_command(command, get_pty=True)
     return stdout.read().decode('utf-8').strip('\n')
 
-
-def get_args():
-    hosts_filename = 'hosts.cfg'
-    cmds_dir = 'input'
-    output_dir = None
-    argument_list = sys.argv[1:]
-    short_options = "h:o:c:"
-    long_options = ["hosts=", "out_dir=", "cmd_dir="]
-    try:
-        arguments, values = getopt.getopt(argument_list, short_options, long_options)
-    except getopt.error as err:
-        # Output error, and return with an error code
-        print(str(err))
-        sys.exit(2)
-
-    for current_argument, current_value in arguments:
-        if current_argument in ("-h", "--hosts"):
-            hosts_filename = current_value
-        elif current_argument in ("-o", "--output"):
-            output_dir = current_value
-        elif current_argument in ("-c", "--commands"):
-            cmds_dir = current_value
-    return hosts_filename, output_dir, cmds_dir
-
-
-def get_hosts_infos(filename):
+def get_hosts_infos(filename, log):
     hosts = []
     with open(filename, 'r') as hosts_file:
         reader = csv.reader(hosts_file, delimiter=",")
@@ -60,9 +37,8 @@ def get_hosts_infos(filename):
             host['password'] = row[3]
             host['vm_name'] = row[4]
             hosts.append(host)
-    print("[DEBUG] Hosts:", hosts)
+            log.msg("registering backend: ", host['vm_name'], host['address'], host['port'])
     return hosts
-
 
 def get_cmds_list(cmds_filename):
     cmds = []
@@ -90,8 +66,8 @@ def shutoff_vm(vm_name, dom, log):
         time.sleep(1)
         i += 1
 
-def create_vm_snapshot(vm_name, log):
-    log.msg(vm_name, "creating backend snapshot")
+def create_vm_snapshot(host, filename, log, reactor):
+    log.msg(host['vm_name'], "creating backend snapshot")
 
     # connect to virsh backend
     conn = None
@@ -99,25 +75,29 @@ def create_vm_snapshot(vm_name, log):
         conn = libvirt.open("qemu:///system")
     except libvirt.libvirtError as e:
         log.msg(repr(e))
-        return False
+        return None
 
     dom = None
     try:
-        dom = conn.lookupByName(vm_name)
+        dom = conn.lookupByName(host['vm_name'])
     except libvirt.libvirtError as e:
         log.msg(repr(e))
-        return False
+        return None
 
     # shut the VM down if it remained active during last cycle
-    shutoff_vm(vm_name, dom, log)
+    shutoff_vm(host['vm_name'], dom, log)
 
 
     # check if current snapshot exists and creates one otherwise
     try:
         snap = dom.snapshotLookupByName("clean_vm_state")
-        log.msg(vm_name, "already has a clean_vm_state snapshot")
+        log.msg(host['vm_name'], "has a clean_vm_state snapshot - reverting")
+
+        # reverse to the clean snapshot
+        dom.revertToSnapshot(snap)
+
     except libvirt.libvirtError as e:
-        log.msg(vm_name, "has not a clean_vm_state snapshot")
+        log.msg(host['vm_name'], "has not a clean_vm_state snapshot")
         SNAPSHOT_XML_TEMPLATE = """<domainsnapshot>
                                       <name>{snapshot_name}</name>
                                     </domainsnapshot>
@@ -128,26 +108,6 @@ def create_vm_snapshot(vm_name, log):
         )
         snap = dom.snapshotLookupByName("clean_vm_state")
 
-    # TODO: run the commands
-    time.sleep(10)
-
-    # shut the VM down
-    shutoff_vm(vm_name, dom, log)
-
-    # revert to the snapshot
-    log.msg(vm_name, "reverting to clean_vm_state")
-    dom.revertToSnapshot(snap)
-
-    return True
-
-
-def restore_vm_state(vm_name):
-    print("[DEBUG] 1. Restore vm state and delete snapshot")
-    os.system("virsh shutdown {}".format(vm_name))
-    time.sleep(3)
-    os.system("virsh snapshot-revert --domain {}  --snapshotname {}".format(vm_name, vm_name+"_fresh1"))
-    time.sleep(2)
-    os.system("virsh snapshot-delete --domain {} --snapshotname {}".format(vm_name, vm_name+"_fresh1"))
-    time.sleep(2)
-    print("[DEBUG] 2. Domain shutdown and snapshot reverted and deleted")
+    #TODO: start domain. Preparing first the exception
+    return dom
 
