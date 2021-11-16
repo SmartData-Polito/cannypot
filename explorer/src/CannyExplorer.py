@@ -47,7 +47,7 @@ class CannyExplorer:
         # load all files already in the input folder
 
         for filename in os.listdir(path=self.input_dir):
-            log.msg("adding new file to processing queue %s " % filename)
+            log.msg("[explorer] adding new file to processing queue %s " % filename)
             self.paths.append(filepath.FilePath(self.input_dir + filename))
 
         # register to inotify to watch the folder for more files
@@ -55,7 +55,7 @@ class CannyExplorer:
         notifier.startReading()
         notifier.watch(filepath.FilePath(self.input_dir), callbacks=[self.notify])
 
-        log.msg("explorer setup completed")
+        log.msg("[explorer] setup complete")
         reactor.callLater(2, self.process_file)
         reactor.addSystemEventTrigger('before', 'persist', self.shutdown_process)
         reactor.run(installSignalHandlers=True)
@@ -69,14 +69,14 @@ class CannyExplorer:
             reactor.callLater(0, self.process_file)
 
     def shutdown_process(self):
-        log.msg("explorer is shutting down (wait)")
+        log.msg("[explorer] shutting down")
 
     def process_file(self):
         if self.paths:
             # Get the first path from the queue
             filename = self.paths[0].path
 
-            log.msg("processing %s queue size %d" % (filename, len(self.paths)))
+            log.msg("[explorer] processing %s queue size %d" % (filename, len(self.paths)))
 
             #TODO: here we make N parallel clients asynchronously
             for host in self.hosts_list:
@@ -84,9 +84,9 @@ class CannyExplorer:
                 #if domain:
                 factory = CannyClientFactory(host, utils.get_cmds_list(filename), log)
                 factory.protocol = ClientTransport
-                log.msg(host['vm_name'], " - connecting to backend on ", host['address'], host['port'])
+                log.msg("[%s] connecting to backend on [%s:%s]" %(host['vm_name'], host['address'], host['port']))
                 reactor.connectTCP(host['address'], int(host['port']), factory)
-                log.msg(host['vm_name'], " - complete backend cycle")
+                log.msg("[%s] complete backend cycle on [%s:%s]" %(host['vm_name'], host['address'], host['port']))
 
                 #if False:
                     # shut the VM down
@@ -95,7 +95,7 @@ class CannyExplorer:
                     #log.msg("removing %s " % filename)
 
             del self.paths[0]
-            log.msg("finished %s queue size %d" % (filename, len(self.paths)))
+            log.msg("[explorer] finished %s queue size %d" % (filename, len(self.paths)))
 
             # Schedule this function to do more work
             if self.paths:

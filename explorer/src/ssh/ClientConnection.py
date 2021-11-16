@@ -1,26 +1,21 @@
-from twisted.conch.ssh import connection
-from ssh.Channel import Channel
 from hosts import utils
-
+from ssh.Channel import Channel
+from twisted.conch.ssh import connection
 
 class ClientConnection(connection.SSHConnection):
 
-    def __init__(self, cmds, server):
-        self.cmds = cmds
-        self.server = server
+    def __init__(self, factory):
+        self.factory = factory
+        self.cmds = factory.cmds
+        self.server = factory.host['address']
         connection.SSHConnection.__init__(self)
-        print("[DEBUG] ClientConnection init with cmds", cmds)
+        self.factory.log.msg('[%s] connecting' % (self.factory.host['vm_name']))
 
     def serviceStarted(self):
-        print("[DEBUG] 1. Start service for all commands in file")
         for cmd in self.cmds:
-            print("[DEBUG] Service started client connection for 1 command")
+            self.factory.log.msg('[%s] sending command: %s' % (self.factory.host['vm_name'], cmd))
             self.openChannel(Channel(conn=self, cmd=cmd, server=self.server))
 
     def channelClosed(self, channel):
-        print("[DEBUG] 1. Closing channel")
+        self.factory.log.msg('[%s] closing connection' % (self.factory.host['vm_name']))
         connection.SSHConnection.channelClosed(self, channel)
-        if len(self.channels) == 0:
-            print("[DEBUG] 2. Starting restoring vm")
-            #utils.restore_vm_state(self.server)
-            print("[DEBUG] 3. Finish restoring vm")

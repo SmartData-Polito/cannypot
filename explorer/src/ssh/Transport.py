@@ -14,7 +14,7 @@ class ClientTransport(transport.SSHClientTransport):
         print("[DEBUG] 1. Connection secure")
         self.requestService(
           ClientUserAuth(self.factory.host['user'],
-                         ClientConnection(self.factory.cmds, self.factory.host['address']),
+                         ClientConnection(self.factory),
                          self.factory.host['password']))
         print("[DEBUG] 2. Connection secure finish")
 
