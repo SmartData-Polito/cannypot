@@ -16,6 +16,9 @@ from twisted.internet import defer
 from twisted.internet import reactor
 from twisted.internet import inotify
 
+from ssh.Transport import ClientTransport
+from ssh.CannyClientFactory import CannyClientFactory
+
 class CannyExplorer:
 
     def __init__(self):
@@ -75,20 +78,21 @@ class CannyExplorer:
 
             log.msg("processing %s queue size %d" % (filename, len(self.paths)))
 
+            #TODO: here we make N parallel clients asynchronously
             for host in self.hosts_list:
-                domain = utils.create_vm_snapshot(host, filename, log, reactor)
-                if domain:
-                    factory = CannyClientFactory(host, get_cmds_list(filename), log)
-                    factory.protocol = ClientTransport
-                    log.msg(host['vm_name'], " - connecting to backend on ", host['address'], host['port'])
-                    reactor.connectTCP(host['address'], int(host['port']), factory)
-                    log.msg(host['vm_name'], " - complete backend cycle")
+                #domain = utils.create_vm_snapshot(host, filename, log, reactor)
+                #if domain:
+                factory = CannyClientFactory(host, utils.get_cmds_list(filename), log)
+                factory.protocol = ClientTransport
+                log.msg(host['vm_name'], " - connecting to backend on ", host['address'], host['port'])
+                reactor.connectTCP(host['address'], int(host['port']), factory)
+                log.msg(host['vm_name'], " - complete backend cycle")
 
-                    if False:
-                        # shut the VM down
-                        utils.shutoff_vm(host['vm_name'], domain, log)
-                        os.remove(filename)
-                        log.msg("removing %s " % filename)
+                #if False:
+                    # shut the VM down
+                    #utils.shutoff_vm(host['vm_name'], domain, log)
+                    #os.remove(filename)
+                    #log.msg("removing %s " % filename)
 
             del self.paths[0]
             log.msg("finished %s queue size %d" % (filename, len(self.paths)))

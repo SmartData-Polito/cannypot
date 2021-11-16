@@ -6,24 +6,6 @@ import os
 import time
 import libvirt
 
-from ssh.Transport import ClientTransport
-from ssh.CannyClientFactory import CannyClientFactory
-
-def produce_output(host, port, username, password, command):
-    print("[DEBUG] Creating paramiko client")
-    ssh = paramiko.SSHClient()
-    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    for x in range(5):
-        try:
-            print("[DEBUG] Try connection")
-            ssh.connect(hostname=host, port=port, username=username, password=password)
-            break
-        except (paramiko.ssh_exception.NoValidConnectionsError, paramiko.AuthenticationException, paramiko.SSHException) as e:
-            print("[DEBUG] Entered paramiko exception")
-            time.sleep(3)
-    stdin, stdout, stderr = ssh.exec_command(command, get_pty=True)
-    return stdout.read().decode('utf-8').strip('\n')
-
 def get_hosts_infos(filename, log):
     hosts = []
     with open(filename, 'r') as hosts_file:
@@ -108,6 +90,6 @@ def create_vm_snapshot(host, filename, log, reactor):
         )
         snap = dom.snapshotLookupByName("clean_vm_state")
 
-    #TODO: start domain. Preparing first the exception
+    #TODO: start domain. Preparing first the exceptions
     return dom
 

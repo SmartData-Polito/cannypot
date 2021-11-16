@@ -22,5 +22,5 @@ class ClientConnection(connection.SSHConnection):
         connection.SSHConnection.channelClosed(self, channel)
         if len(self.channels) == 0:
             print("[DEBUG] 2. Starting restoring vm")
-            utils.restore_vm_state(self.server)
+            #utils.restore_vm_state(self.server)
             print("[DEBUG] 3. Finish restoring vm")

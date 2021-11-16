@@ -14,7 +14,7 @@ class Channel(channel.SSHChannel):
     def __init__(self, conn=None, cmd=None, server=None):
         self.cmd = cmd
         self.server = server
-        output_dir = ExplorerConfig().get('fs', 'output_dir')
+        output_dir = ExplorerConfig().get('backend', 'output_dir')
         cmd_hash = str(hash(self.cmd['complete_cmd']))
         os.makedirs(output_dir+cmd_hash, exist_ok=True)
         t = time.strftime("%m:%d:%Y-%H:%M:%S")
@@ -65,8 +65,8 @@ class Channel(channel.SSHChannel):
     def closed(self):
         self.loseConnection()
         cmd_hash = str(hash(self.cmd['complete_cmd']))
-        if ExplorerConfig().getboolean('functionality', 'backup_outputs'):
-            output_dir = ExplorerConfig().get('fs', 'output_dir')
+        if ExplorerConfig().getboolean('general', 'backup_outputs'):
+            output_dir = ExplorerConfig().get('backend', 'output_dir')
             info_file = output_dir + cmd_hash + '/info.txt'
             if not os.path.exists(info_file):
                 with open(info_file, "w") as file:

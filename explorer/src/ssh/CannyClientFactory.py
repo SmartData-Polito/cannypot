@@ -1,10 +1,10 @@
 from twisted.internet import protocol
-
+import time
 
 
 class CannyClientFactory(protocol.ClientFactory):
 
-    def __init__(self, host, log):
+    def __init__(self, host, cmds, log):
         protocol.ClientFactory.__init__(self)
         self.cmds = cmds
         self.host= host
@@ -12,16 +12,11 @@ class CannyClientFactory(protocol.ClientFactory):
         self.retry = 0
         self.log.msg(host['vm_name'], "executing commands", cmds)
 
-    def buildProtocol(self):
-        return ClientTransport()
-
-
     def clientConnectionFailed(self, connector, reason):
         if self.retry < 5:
             time.sleep(1)
             self.retry += 1
-            self.log.msg(host['vm_name'], "connection failed, retry", self.retry)
+            self.log.msg(self.host['vm_name'], "connection failed, retry", self.retry)
             connector.connect()
-
 
 # TODO What if something here fails? Should destroy vm!??

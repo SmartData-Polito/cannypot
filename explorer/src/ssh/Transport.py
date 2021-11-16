@@ -12,8 +12,10 @@ class ClientTransport(transport.SSHClientTransport):
 
     def connectionSecure(self):
         print("[DEBUG] 1. Connection secure")
-        self.requestService(ClientUserAuth('root', ClientConnection(self.factory.cmds, self.factory.server),
-                                           self.factory.password))
+        self.requestService(
+          ClientUserAuth(self.factory.host['user'],
+                         ClientConnection(self.factory.cmds, self.factory.host['address']),
+                         self.factory.host['password']))
         print("[DEBUG] 2. Connection secure finish")
 
     def receiveError(self, reasonCode, description):
