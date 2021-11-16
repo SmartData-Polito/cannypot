@@ -16,10 +16,10 @@ class ClientUserAuth(userauth.SSHUserAuthClient):
         else:
             return
 
-    def getPublicKey(self):
-        print("[DEBUG] Getting public key")
-        return keys.Key.fromFile('/root/.ssh/id_rsa.pub')
+    #def getPublicKey(self):
+        #print("[DEBUG] Getting public key")
+        #return keys.Key.fromFile('/root/.ssh/id_rsa.pub')
 
-    def getPrivateKey(self):
-        print("[DEBUG] Getting private key")
-        return defer.succeed(keys.Key.fromFile('/root/.ssh/id_rsa'))
+    #def getPrivateKey(self):
+        #print("[DEBUG] Getting private key")
+        #return defer.succeed(keys.Key.fromFile('/root/.ssh/id_rsa'))
