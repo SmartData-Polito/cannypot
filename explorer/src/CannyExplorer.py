@@ -87,12 +87,13 @@ class CannyExplorer:
                 log.msg("[%s] connecting to backend on [%s:%s]" %(host['vm_name'], host['address'], host['port']))
                 reactor.connectTCP(host['address'], int(host['port']), factory)
                 log.msg("[%s] complete backend cycle on [%s:%s]" %(host['vm_name'], host['address'], host['port']))
-
                 #if False:
                     # shut the VM down
                     #utils.shutoff_vm(host['vm_name'], domain, log)
                     #os.remove(filename)
                     #log.msg("removing %s " % filename)
+
+            #TODO: join all clients, stop factory and delete file.
 
             del self.paths[0]
             log.msg("[explorer] finished %s queue size %d" % (filename, len(self.paths)))

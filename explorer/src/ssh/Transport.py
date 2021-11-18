@@ -11,22 +11,16 @@ class ClientTransport(transport.SSHClientTransport):
         return defer.succeed(1)
 
     def connectionSecure(self):
-        print("[DEBUG] 1. Connection secure")
+        self.factory.log.msg('[%s] SSH connection: %s:%s' %
+                             (self.factory.host['vm_name'],
+                              self.factory.host['address'],
+                              self.factory.host['port']))
         self.requestService(
           ClientUserAuth(self.factory.host['user'],
                          ClientConnection(self.factory),
                          self.factory.host['password']))
-        print("[DEBUG] 2. Connection secure finish")
 
     def receiveError(self, reasonCode, description):
-        print("[DEBUG] 1. Error received")
-        self._log.error(
-            "Got remote error, code {code}\nreason: {description}",
-            code=reasonCode,
-            description=description,
-        )
-        print("[DEBUG] 2. Restore vm after error received")
-        utils.restore_vm_state(self.factory.server)
-        print("[DEBUG] 3. Finish restore vm after error received")
-
-
+        self.factory.log.err(
+          "Got remote error, code {code}\nreason: {description}",
+          code=reasonCode, description=description)
