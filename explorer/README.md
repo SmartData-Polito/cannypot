@@ -16,10 +16,10 @@ This script:
 
 Other backend systems can be provided manually (instructions below).
 
-The Explorer must be started manually. Run:
+The Explorer can be started with:
 
 ```
-python PATH/src/CannyExplorer.py
+PATH/explorer/bin/explorer.sh
 ```
 
 ## Building Backend Systems
