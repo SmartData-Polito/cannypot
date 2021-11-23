@@ -40,3 +40,5 @@ fi
 # copy explorer files
 mkdir -p $PREFIX/explorer
 cp -r $DIR/etc $DIR/src/* $DIR/bin $PREFIX/explorer
+
+# TODO maybe could also modify etc/explorer.cfg with the info about the learner path for the frontend (file transfer service)
