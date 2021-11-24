@@ -15,11 +15,3 @@ class ClientUserAuth(userauth.SSHUserAuthClient):
             return defer.succeed(self.password)
         else:
             return
-
-    #def getPublicKey(self):
-        #print("[DEBUG] Getting public key")
-        #return keys.Key.fromFile('/root/.ssh/id_rsa.pub')
-
-    #def getPrivateKey(self):
-        #print("[DEBUG] Getting private key")
-        #return defer.succeed(keys.Key.fromFile('/root/.ssh/id_rsa'))

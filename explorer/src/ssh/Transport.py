@@ -8,6 +8,7 @@ from hosts import utils
 class ClientTransport(transport.SSHClientTransport):
 
     def verifyHostKey(self, pubKey, fingerprint):
+        self.factory.log.msg('[%s] SSH host fingerprinting' % (self.factory.host['vm_name']))
         return defer.succeed(1)
 
     def connectionSecure(self):

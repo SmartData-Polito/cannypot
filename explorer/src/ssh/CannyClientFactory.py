@@ -3,8 +3,9 @@ import time
 
 class CannyClientFactory(protocol.ClientFactory):
 
-    def __init__(self, host, cmds, log):
+    def __init__(self, host, cmds, log, config):
         protocol.ClientFactory.__init__(self)
+        self.config = config
         self.cmds = cmds
         self.host= host
         self.log = log

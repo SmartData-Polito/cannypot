@@ -5,7 +5,7 @@ import time
 import pathlib
 from hosts import utils
 
-from config.ExplorerConfig import ExplorerConfig
+import configparser
 
 from twisted.python import log
 from twisted.python.logfile import DailyLogFile
@@ -24,36 +24,38 @@ class CannyExplorer:
     def __init__(self):
 
         root_path = os.path.abspath(os.path.dirname(__file__))
+        self.config = configparser.ConfigParser(interpolation=configparser.ExtendedInterpolation())
+        self.config.read(root_path + "/etc/explorer.cfg")
 
         # paths to be processed
         self.paths = []
 
         # initialize the log system
-        log_dir = root_path + "/" + ExplorerConfig().get('log', 'explorer_log_dir')
-        log_file = log_dir + ExplorerConfig().get('log', 'explorer_log_file')
+        log_dir = root_path + "/" + self.config.get('log', 'explorer_log_dir')
+        log_file = log_dir + self.config.get('log', 'explorer_log_file')
         pathlib.Path(log_dir).mkdir(parents=True, exist_ok=True)
         log.startLogging(DailyLogFile.fromFullPath(log_file))
 
         # read the list of backend hosts
-        backend_conf = ExplorerConfig().get('backend', 'hosts')
-        self.hosts_list = utils.get_hosts_infos(backend_conf, log)
+        backend_conf = self.config.get('backend', 'hosts')
+        self.hosts_list = utils.get_hosts_infos(root_path + "/" + backend_conf, log)
 
         # config the input / output folders
-        self.output_dir = root_path + "/" + ExplorerConfig().get('backend', 'output_dir')
-        self.input_dir = root_path + "/" + ExplorerConfig().get('backend', 'input_dir')
-        pathlib.Path(self.output_dir).mkdir(parents=True, exist_ok=True)
-        pathlib.Path(self.input_dir).mkdir(parents=True, exist_ok=True)
+        self.config.output_dir = root_path + "/" + self.config.get('backend', 'output_dir')
+        self.config.input_dir = root_path + "/" + self.config.get('backend', 'input_dir')
+        pathlib.Path(self.config.output_dir).mkdir(parents=True, exist_ok=True)
+        pathlib.Path(self.config.input_dir).mkdir(parents=True, exist_ok=True)
 
         # load all files already in the input folder
 
-        for filename in os.listdir(path=self.input_dir):
+        for filename in os.listdir(path=self.config.input_dir):
             log.msg("[explorer] adding new file to processing queue %s " % filename)
-            self.paths.append(filepath.FilePath(self.input_dir + filename))
+            self.paths.append(filepath.FilePath(self.config.input_dir + filename))
 
         # register to inotify to watch the folder for more files
         notifier = inotify.INotify()
         notifier.startReading()
-        notifier.watch(filepath.FilePath(self.input_dir), callbacks=[self.notify])
+        notifier.watch(filepath.FilePath(self.config.input_dir), callbacks=[self.notify])
 
         log.msg("[explorer] setup complete")
         reactor.callLater(2, self.process_file)
@@ -82,7 +84,7 @@ class CannyExplorer:
             for host in self.hosts_list:
                 #domain = utils.create_vm_snapshot(host, filename, log, reactor)
                 #if domain:
-                factory = CannyClientFactory(host, utils.get_cmds_list(filename), log)
+                factory = CannyClientFactory(host, utils.get_cmds_list(filename), log, self.config)
                 factory.protocol = ClientTransport
                 log.msg("[%s] connecting to backend on [%s:%s]" %(host['vm_name'], host['address'], host['port']))
                 reactor.connectTCP(host['address'], int(host['port']), factory)

@@ -1,44 +1,53 @@
 from twisted.conch.ssh import channel, common, session
-import os
-import time
 from tty_log import tty_utils
-import struct
-from config.ExplorerConfig import ExplorerConfig
+import os
 import json
-
+import time
+import struct
+import ctypes
 
 class Channel(channel.SSHChannel):
 
-    name = 'session'
+    name = "session"
 
-    def __init__(self, conn=None, cmd=None, server=None):
+    def __init__(self, conn=None, cmd=None, server=None, factory=None):
         self.cmd = cmd
         self.server = server
-        output_dir = ExplorerConfig().get('backend', 'output_dir')
-        cmd_hash = str(hash(self.cmd['complete_cmd']))
-        os.makedirs(output_dir+cmd_hash, exist_ok=True)
-        t = time.strftime("%m:%d:%Y-%H:%M:%S")
+        self.factory = factory
+
+        cmd_hash = str(ctypes.c_size_t(hash(self.cmd['complete_cmd'])).value)
+        self.factory.log.msg('[%s] command hash: %s  -- %s --) ' %
+                             (self.factory.host['vm_name'], cmd_hash, self.cmd['complete_cmd']))
+
+        output_dir = self.factory.config.output_dir
+        os.makedirs(output_dir + cmd_hash, exist_ok=True)
+        t = time.strftime("%Y%m%d_%H%M%S")
         day = time.strftime("%Y%m%d")
-        self.ttylogFile = output_dir+cmd_hash + '/ttylog_'+cmd_hash + \
+        self.ttylogFile = output_dir + cmd_hash + '/ttylog_' + cmd_hash + \
                           '_' + tty_utils.make_safe_filename(self.server) + '_' + t
-        self.ttyName = 'ttylog_'+cmd_hash + \
+        self.ttyName = 'ttylog_' + cmd_hash + \
                           '_' + tty_utils.make_safe_filename(self.server) + '_' + t
-        log_file_path = ExplorerConfig().get('log', 'explorer_json_file')
-        self.log_file = log_file_path+'.'+day
+
+        self.log_file = output_dir + self.factory.config.get('log', 'explorer_log_file') + '.' + day
         channel.SSHChannel.__init__(self, conn=conn)
 
     def channelOpen(self, data):
-        print("[DEBUG] 1. Start opening channel")
+        self.factory.log.msg('[%s] opening channel) ' % (self.factory.host['vm_name']))
         self.catData = b''
         tty_utils.ttylog_open(self.ttylogFile, time.time())
+
+        #TODO: Here we should do better and format output
         term = os.environ.get('TERM', 'xterm')
         winSize = (25, 80, 0, 0)
         ptyReqData = session.packRequest_pty_req(term, winSize, '')
         self.conn.sendRequest(self, 'pty-req', ptyReqData, wantReply=1)
-        d = self.conn.sendRequest(self, 'exec', common.NS(self.cmd['complete_cmd']),
+        d = self.conn.sendRequest(self, 'exec',
+                                  common.NS(self.cmd['complete_cmd']),
                                   wantReply=1)
         d.addCallback(self._cbSendRequest)
-        print("[DEBUG] 2. Channel open (?)")
+        self.factory.log.msg('[%s] command sent' % (self.factory.host['vm_name']))
+
+        #TODO: Save also the command on the TTY to make things simple.
 
     def _cbSendRequest(self, ignored):
         self.conn.sendEOF(self)
@@ -50,10 +59,11 @@ class Channel(channel.SSHChannel):
                             tty_utils.TYPE_INPUT,
                             time.time(),
                             data)
+        self.factory.log.msg('[%s] receiving data' % (self.factory.host['vm_name']))
 
     def request_exit_status(self, data):
         status = struct.unpack('>L', data)[0]
-        timestamp = time.strftime("%m:%d:%Y-%H:%M:%S")
+        timestamp = time.strftime("%Y%m%d_%H:%M:%S")
         j = {"eventid": "explorer.exec", "exitcode": status, "cmd": self.cmd['complete_cmd'],
              "output": self.catData.decode('utf-8'), "outputfile": self.ttyName, "machine": self.server,
              "timestamp": timestamp}
@@ -61,21 +71,12 @@ class Channel(channel.SSHChannel):
             log_fp.write(json.dumps(j))
             log_fp.write('\n')
 
-
     def closed(self):
         self.loseConnection()
-        cmd_hash = str(hash(self.cmd['complete_cmd']))
-        if ExplorerConfig().getboolean('general', 'backup_outputs'):
-            output_dir = ExplorerConfig().get('backend', 'output_dir')
-            info_file = output_dir + cmd_hash + '/info.txt'
-            if not os.path.exists(info_file):
-                with open(info_file, "w") as file:
-                    file.write(self.cmd['complete_cmd'])
-                    file.close()
-        else:
-            os.remove(self.ttylogFile)
+        self.factory.log.msg('[%s] connection closed' % (self.factory.host['vm_name']))
 
     def eofReceived(self):
         tty_utils.ttylog_close(self.ttylogFile, time.time())
-        print(self.catData.decode('utf-8'))
+        self.factory.log.msg('[%s] response received' % (self.factory.host['vm_name']))
+
 
