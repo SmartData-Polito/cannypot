@@ -23,6 +23,8 @@ class CannyExplorer:
 
     def __init__(self):
 
+        self.working = 0
+
         root_path = os.path.abspath(os.path.dirname(__file__))
         self.config = configparser.ConfigParser(interpolation=configparser.ExtendedInterpolation())
         self.config.read(root_path + "/etc/explorer.cfg")
@@ -73,36 +75,49 @@ class CannyExplorer:
     def shutdown_process(self):
         log.msg("[explorer] shutting down")
 
-    def process_file(self):
-        if self.paths:
-            # Get the first path from the queue
-            filename = self.paths[0].path
+    def vm_complete(self, host, domain):
+        # shut the VM down
+        utils.shutoff_vm(host['vm_name'], domain, log)
+        self.working -= 1
 
-            log.msg("[explorer] processing %s queue size %d" % (filename, len(self.paths)))
-
-            #TODO: here we make N parallel clients asynchronously
-            for host in self.hosts_list:
-                #domain = utils.create_vm_snapshot(host, filename, log, reactor)
-                #if domain:
-                factory = CannyClientFactory(host, utils.get_cmds_list(filename), log, self.config)
-                factory.protocol = ClientTransport
-                log.msg("[%s] connecting to backend on [%s:%s]" %(host['vm_name'], host['address'], host['port']))
-                reactor.connectTCP(host['address'], int(host['port']), factory)
-                log.msg("[%s] complete backend cycle on [%s:%s]" %(host['vm_name'], host['address'], host['port']))
-                #if False:
-                    # shut the VM down
-                    #utils.shutoff_vm(host['vm_name'], domain, log)
-                    #os.remove(filename)
-                    #log.msg("removing %s " % filename)
-
-            #TODO: join all clients, stop factory and delete file.
-
+        if not self.working:
+            # we come here when all VMS are done
+            # thus after rejoin we delete the file and move on
             del self.paths[0]
-            log.msg("[explorer] finished %s queue size %d" % (filename, len(self.paths)))
+            log.msg("[explorer] finished %s queue size %d" % (self.filename, len(self.paths)))
 
-            # Schedule this function to do more work
+            # remove the input file
+            os.remove(self.filename)
+            log.msg("removing %s " % self.filename)
+
+            # Schedule to process the next file
             if self.paths:
                 reactor.callLater(0, self.process_file)
+
+    def process_file(self):
+        if self.paths and not self.working:
+            # Get the first path from the queue
+            self.filename = self.paths[0].path
+
+            log.msg("[explorer] processing %s queue size %d" % (self.filename, len(self.paths)))
+
+            for host in self.hosts_list:
+                domain = utils.create_vm_snapshot(host, self.filename, log, reactor)
+                if domain:
+                    self.working += 1
+                    factory = CannyClientFactory(host, domain, utils.get_cmds_list(self.filename), log, self)
+                    factory.protocol = ClientTransport
+                    log.msg("[%s] connecting to backend on [%s:%s]" % (host['vm_name'], host['address'], host['port']))
+                    reactor.connectTCP(host['address'], int(host['port']), factory)
+                    log.msg("[%s] complete backend cycle on [%s:%s]" % (host['vm_name'], host['address'], host['port']))
+                else:
+                    # if only some machines fail we keep going anyway
+                    log.err("[%s] fail to create a VM [%s:%s]" % (host['vm_name'], host['address'], host['port']))
+
+            # we could not start a single VM retry in 60s
+            if not self.working:
+                log.msg("failed to run all VMs - will retry in 60s")
+                reactor.callLater(60, self.process_file)
 
 if __name__ == "__main__":
     cannypot = CannyExplorer()

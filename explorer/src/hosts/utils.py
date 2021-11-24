@@ -38,15 +38,19 @@ def get_cmds_list(cmds_filename):
 
 def shutoff_vm(vm_name, dom, log):
     i = 0
-    while dom.isActive():
-        if i == 0:
-            log.msg(vm_name, "domain active, shutting it down")
-            dom.shutdown()
-        elif i == 60:
-            log.msg(vm_name, "forcing shutdown after 60s")
-            dom.destroy()
-        time.sleep(1)
-        i += 1
+    try:
+        while dom.isActive():
+            if i == 0:
+                log.msg(vm_name, "domain active, shutting it down")
+                dom.shutdown()
+            elif i == 60:
+                log.msg(vm_name, "forcing shutdown after 60s")
+                dom.destroy()
+            time.sleep(1)
+            i += 1
+    except libvirt.libvirtError as e:
+        log.err(repr(e))
+        return None
 
 def create_vm_snapshot(host, filename, log, reactor):
     log.msg(host['vm_name'], "creating backend snapshot")
@@ -56,14 +60,14 @@ def create_vm_snapshot(host, filename, log, reactor):
     try:
         conn = libvirt.open("qemu:///system")
     except libvirt.libvirtError as e:
-        log.msg(repr(e))
+        log.err(repr(e))
         return None
 
     dom = None
     try:
         dom = conn.lookupByName(host['vm_name'])
     except libvirt.libvirtError as e:
-        log.msg(repr(e))
+        log.err(repr(e))
         return None
 
     # shut the VM down if it remained active during last cycle

@@ -17,5 +17,6 @@ class ClientConnection(connection.SSHConnection):
             self.openChannel(Channel(conn=self, cmd=cmd, server=self.server, factory=self.factory))
 
     def channelClosed(self, channel):
-        self.factory.log.msg('[%s] closing connection' % (self.factory.host['vm_name']))
         connection.SSHConnection.channelClosed(self, channel)
+        self.factory.log.msg('[%s] closing connection' % (self.factory.host['vm_name']))
+        self.factory.client_gone()

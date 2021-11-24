@@ -3,15 +3,19 @@ import time
 
 class CannyClientFactory(protocol.ClientFactory):
 
-    def __init__(self, host, cmds, log, config):
+    def __init__(self, host, domain, cmds, log, explorer):
         protocol.ClientFactory.__init__(self)
-        self.config = config
+        self.explorer = explorer
+        self.host = host
+        self.domain = domain
+        self.config = explorer.config
         self.cmds = cmds
-        self.host= host
         self.log = log
         self.retry = 0
         self.log.msg("[%s] executing commands [%s]" % (host['vm_name'], cmds))
-        self.active_clients = 0
+
+    def startedConnecting(self, connector):
+        self.connector = connector
 
     def clientConnectionFailed(self, connector, reason):
         if self.retry < 5:
@@ -22,6 +26,13 @@ class CannyClientFactory(protocol.ClientFactory):
             connector.connect()
         else:
             self.log.err("[%s] failed to connect" % (self.host['vm_name']))
+        self.client_gone()
 
     def clientConnectionLost(self, connector, reason):
-        print('Lost connection. Reason:', reason)
+        self.log.msg("[%s] connection lost: %s" % (self.host['vm_name'], reason))
+        self.client_gone()
+
+    def client_gone(self):
+        self.log.msg("[%s] done. closing connection." % (self.host['vm_name']))
+        self.connector.disconnect()
+        self.explorer.vm_complete(self.host, self.domain)
