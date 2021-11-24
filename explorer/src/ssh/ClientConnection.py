@@ -12,6 +12,7 @@ class ClientConnection(connection.SSHConnection):
         self.factory.log.msg('[%s] connecting' % (self.factory.host['vm_name']))
 
     def serviceStarted(self):
+        #TODO: This is wrong, must not make N Channels
         for cmd in self.cmds:
             self.factory.log.msg('[%s] sending command: %s' % (self.factory.host['vm_name'], cmd))
             self.openChannel(Channel(conn=self, cmd=cmd, server=self.server, factory=self.factory))

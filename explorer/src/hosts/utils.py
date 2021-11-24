@@ -48,7 +48,7 @@ def shutoff_vm(vm_name, dom, log):
                 dom.destroy()
             time.sleep(1)
             i += 1
-    except libvirt.libvirtError as e:
+    except Exception as e:
         log.err(repr(e))
         return None
 

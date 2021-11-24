@@ -80,6 +80,8 @@ class CannyExplorer:
         utils.shutoff_vm(host['vm_name'], domain, log)
         self.working -= 1
 
+        log.msg("[%s] complete backend cycle on [%s:%s]" % (host['vm_name'], host['address'], host['port']))
+
         if not self.working:
             # we come here when all VMS are done
             # thus after rejoin we delete the file and move on
@@ -109,7 +111,6 @@ class CannyExplorer:
                     factory.protocol = ClientTransport
                     log.msg("[%s] connecting to backend on [%s:%s]" % (host['vm_name'], host['address'], host['port']))
                     reactor.connectTCP(host['address'], int(host['port']), factory)
-                    log.msg("[%s] complete backend cycle on [%s:%s]" % (host['vm_name'], host['address'], host['port']))
                 else:
                     # if only some machines fail we keep going anyway
                     log.err("[%s] fail to create a VM [%s:%s]" % (host['vm_name'], host['address'], host['port']))

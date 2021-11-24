@@ -34,5 +34,8 @@ class CannyClientFactory(protocol.ClientFactory):
 
     def client_gone(self):
         self.log.msg("[%s] done. closing connection." % (self.host['vm_name']))
-        self.connector.disconnect()
+        try:
+            self.connector.disconnect()
+        except Exception as e:
+            self.log.err(repr(e))
         self.explorer.vm_complete(self.host, self.domain)
