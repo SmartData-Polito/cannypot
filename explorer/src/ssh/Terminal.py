@@ -61,7 +61,7 @@ class Terminal(channel.SSHChannel):
 
     def dataReceived(self, data):
         self.received_data += data
-        tty_utils.ttylog_write(self.ttylogFile, len(data), tty_utils.TYPE_INPUT, time.time(), data)
+        tty_utils.ttylog_write(self.ttylogFile, len(data), tty_utils.TYPE_OUTPUT, time.time(), data)
         self.factory.log.msg('[%s] receiving data' % (self.factory.host['vm_name']))
 
     def request_exit_status(self, data):
