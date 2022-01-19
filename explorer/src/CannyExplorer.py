@@ -3,7 +3,7 @@
 import os
 import time
 import pathlib
-from hosts import utils
+from vms import manager
 
 import configparser
 
@@ -40,7 +40,7 @@ class CannyExplorer:
 
         # read the list of backend hosts
         backend_conf = self.config.get('backend', 'hosts')
-        self.hosts_list = utils.get_hosts_infos(root_path + "/" + backend_conf, log)
+        self.hosts_list = manager.get_hosts_infos(root_path + "/" + backend_conf, log)
 
         # config the input / output folders
         self.config.output_dir = root_path + "/" + self.config.get('backend', 'output_dir')
@@ -77,7 +77,7 @@ class CannyExplorer:
 
     def vm_complete(self, host, domain):
         # shut the VM down
-        utils.shutoff_vm(host['vm_name'], domain, log)
+        manager.shutoff_vm(host['vm_name'], domain, log)
         self.working -= 1
 
         log.msg("[%s] complete backend cycle on [%s:%s]" % (host['vm_name'], host['address'], host['port']))
@@ -104,10 +104,10 @@ class CannyExplorer:
             log.msg("[explorer] processing %s queue size %d" % (self.filename, len(self.paths)))
 
             for host in self.hosts_list:
-                domain = utils.create_vm_snapshot(host, self.filename, log, reactor)
+                domain = manager.create_vm_snapshot(host, self.filename, log, reactor)
                 if domain:
                     self.working += 1
-                    factory = CannyClientFactory(host, domain, utils.get_cmds_list(self.filename), log, self)
+                    factory = CannyClientFactory(host, domain, manager.get_cmds_list(self.filename), log, self)
                     factory.protocol = ClientTransport
                     log.msg("[%s] connecting to backend on [%s:%s]" % (host['vm_name'], host['address'], host['port']))
                     reactor.connectTCP(host['address'], int(host['port']), factory)

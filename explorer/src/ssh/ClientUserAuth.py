@@ -1,5 +1,5 @@
-from twisted.conch.ssh import keys, userauth
 from twisted.internet import defer
+from twisted.conch.ssh import keys, userauth
 
 
 class ClientUserAuth(userauth.SSHUserAuthClient):

@@ -1,5 +1,4 @@
-from hosts import utils
-from ssh.Channel import Channel
+from ssh.Terminal import Terminal
 from twisted.conch.ssh import connection
 
 class ClientConnection(connection.SSHConnection):
@@ -12,10 +11,9 @@ class ClientConnection(connection.SSHConnection):
         self.factory.log.msg('[%s] connecting' % (self.factory.host['vm_name']))
 
     def serviceStarted(self):
-        #TODO: This is wrong, must not make N Channels
         for cmd in self.cmds:
-            self.factory.log.msg('[%s] sending command: %s' % (self.factory.host['vm_name'], cmd))
-            self.openChannel(Channel(conn=self, cmd=cmd, server=self.server, factory=self.factory))
+            self.factory.log.msg('[%s] opening a new channel' % (self.factory.host['vm_name']))
+            self.openChannel(Terminal(conn=self, cmd=cmd, server=self.server, factory=self.factory))
 
     def channelClosed(self, channel):
         connection.SSHConnection.channelClosed(self, channel)

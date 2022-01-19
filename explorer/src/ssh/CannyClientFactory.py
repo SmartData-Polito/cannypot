@@ -1,5 +1,5 @@
-from twisted.internet import protocol
 import time
+from twisted.internet import protocol
 
 class CannyClientFactory(protocol.ClientFactory):
 
@@ -26,11 +26,10 @@ class CannyClientFactory(protocol.ClientFactory):
             connector.connect()
         else:
             self.log.err("[%s] failed to connect" % (self.host['vm_name']))
-        self.client_gone()
+            self.client_gone()
 
     def clientConnectionLost(self, connector, reason):
         self.log.msg("[%s] connection lost: %s" % (self.host['vm_name'], reason))
-        self.client_gone()
 
     def client_gone(self):
         self.log.msg("[%s] done. closing connection." % (self.host['vm_name']))

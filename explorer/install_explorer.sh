@@ -16,8 +16,10 @@ PREFIX=$(realpath $1)
 mkdir -p $PREFIX
 cd $PREFIX
 
-if [ "$VMINSTALL" = "YES" ]; then
+#TODO: Dockerize it all
+sudo apt-get install libvirt-dev
 
+if [ "$VMINSTALL" = "YES" ]; then
     # Install libvirt and requirements
     sudo apt install qemu-kvm libvirt-daemon-system
     sudo apt install virtinst

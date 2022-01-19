@@ -1,10 +1,10 @@
-import paramiko
-import sys
-import getopt
-import csv
 import os
+import sys
+import csv
 import time
+import getopt
 import libvirt
+import paramiko
 
 def get_hosts_infos(filename, log):
     hosts = []
@@ -19,7 +19,7 @@ def get_hosts_infos(filename, log):
             host['password'] = row[3]
             host['vm_name'] = row[4]
             hosts.append(host)
-            log.msg("registering backend: ", host['vm_name'], host['address'], host['port'])
+            log.msg("registering backend:", host['vm_name'], host['address'], host['port'])
     return hosts
 
 def get_cmds_list(cmds_filename):
@@ -94,6 +94,5 @@ def create_vm_snapshot(host, filename, log, reactor):
         )
         snap = dom.snapshotLookupByName("clean_vm_state")
 
-    #TODO: start domain. Preparing first the exceptions
+    dom.create()
     return dom
-

@@ -9,14 +9,18 @@
   <bridge name='virbr10' stp='on' delay='0'/>
   <mac address='52:54:00:38:27:36'/>
   <dns>
+    <host ip='10.0.0.2'>
+      <hostname>ubuntu-clean.local</hostname>
+    </host>
     <host ip='10.0.0.3'>
-      <hostname>ubuntu.local</hostname>
+      <hostname>ubuntu-full.local</hostname>
     </host>
   </dns>
   <ip address='10.0.0.1' netmask='255.255.255.0'>
     <dhcp>
       <range start='10.0.0.2' end='10.0.0.254'/>
-      <host mac='00:00:00:00:00:AA' name='ubuntu' ip='10.0.0.2'/>
+      <host mac='00:00:00:00:00:AA' name='ubuntu-clean' ip='10.0.0.2'/>
+      <host mac='00:00:00:00:00:BB' name='ubuntu-full' ip='10.0.0.3'/>
     </dhcp>
   </ip>
 </network>
