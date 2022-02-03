@@ -114,7 +114,7 @@ create_net.sh
 create_vm.sh <name> <MAC> <password> <prefix>
 ```
 
-These commands will create a virtual network called as defined inside ``explorer/vm/virsh.xml'' and a virtual machine inside it with ubuntu.
+These commands will create a virtual network called as defined inside ``explorer/vm/virsh.xml`` and a virtual machine inside it with ubuntu.
 
 ### Explorer configurations
 
