@@ -38,6 +38,12 @@ Some notices:
 
 * The Learner consists of extensions made over the `cowrie` honeypot [[https://github.com/cowrie/cowrie]]. Our additions to Cowrie code base are in the ``learner`` directory. They are copied over the Cowrie base by the installation script. Scripts to provide the exact changes can be found in the ``patch'' folder.
 
+* The learner should be installed and run as a normal user (not root)
+
+```
+sudo adduser --disabled-password cowrie
+```
+
 * See the Cowrie installation instructions for further details on how Cowrie is configured.
 
 * To start CannyPot, run
@@ -101,14 +107,14 @@ PATH/explorer/bin/explorer.sh
 Each VM you want to work with should be created ahead of time and added to the ``explorer/etc/hosts.csv`` file.
 To create them, information can be found in the ``explorer/vm`` directory.
 
-For the default behaviour, these scripts in the `explorer/install_explorer.sh` script:
+For the default behaviour, look at the `explorer/install_explorer.sh` script:
 
 ```
 create_net.sh
-create_vm.sh ubuntu 00:00:00:00:00:AA ubuntu
+create_vm.sh <name> <MAC> <password> <prefix>
 ```
 
-These commands will create a virtual network called **explorernet** and a virtual machine inside it with ubuntu.
+These commands will create a virtual network called as defined inside ``explorer/vm/virsh.xml'' and a virtual machine inside it with ubuntu.
 
 ### Explorer configurations
 
