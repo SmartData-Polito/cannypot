@@ -69,7 +69,7 @@ class Terminal(channel.SSHChannel):
         self.factory.log.msg('[%s] request_exit_status' % (self.factory.host['vm_name']))
         j = {"eventid": "explorer.exec",
              "exitcode": status,
-             "cmd": self.cmd['complete_cmd'],
+             "cmd": base64.b64encode(self.cmd['complete_cmd']).decode('utf-8'),
              "cmd_hash": self.cmd_hash,
              "output": base64.b64encode(self.received_data).decode('utf-8'),
              "outputfile": self.ttyName,
