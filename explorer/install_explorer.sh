@@ -33,11 +33,11 @@ if [ "$VMINSTALL" = "YES" ]; then
 
 fi
 
-# pip install virtualenv
-# virtualenv --python=python3 cannypot-env
-# source cannypot-env/bin/activate
-# pip install --upgrade pip
-# pip install --upgrade -r $DIR/requirements.txt
+pip install virtualenv
+virtualenv --python=python3 cannypot-env
+source cannypot-env/bin/activate
+pip install --upgrade pip
+pip install --upgrade -r $DIR/requirements.txt
 
 # copy explorer files
 mkdir -p $PREFIX/explorer
