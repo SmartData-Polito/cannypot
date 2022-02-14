@@ -6,6 +6,8 @@ import getopt
 import libvirt
 import paramiko
 
+TIMEOUT = 15 # Time until force vm down
+
 def get_hosts_infos(filename, log):
     hosts = []
     with open(filename, 'r') as hosts_file:
@@ -43,8 +45,8 @@ def shutoff_vm(vm_name, dom, log):
             if i == 0:
                 log.msg(vm_name, "domain active, shutting it down")
                 dom.shutdown()
-            elif i == 60:
-                log.msg(vm_name, "forcing shutdown after 60s")
+            elif i == TIMEOUT:
+                log.msg(vm_name, "forcing shutdown")
                 dom.destroy()
             time.sleep(1)
             i += 1

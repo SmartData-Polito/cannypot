@@ -7,6 +7,9 @@ import hashlib
 from tty_log import tty_utils
 from twisted.internet import reactor
 from twisted.conch.ssh import channel, common, session
+from twisted.protocols.policies import TimeoutProtocol
+
+TIMEOUT = 30 # time to wait for a command to finish (in s)
 
 class Terminal(channel.SSHChannel):
 
@@ -19,6 +22,8 @@ class Terminal(channel.SSHChannel):
         self.ttylogFile = None
         self.received_data = b''
         self.output_dir = self.factory.config.output_dir
+
+        self.timeout = None
 
         channel.SSHChannel.__init__(self, conn=conn)
 
@@ -58,18 +63,24 @@ class Terminal(channel.SSHChannel):
     def send_eof(self, ignored):
         self.conn.sendEOF(self)
         self.factory.log.msg('[%s] eof sent' % (self.factory.host['vm_name']))
+        self.timeout = reactor.callLater(TIMEOUT, self.abort)
+
+    def abort(self):
+        self.factory.log.msg('[%s] aborting' % (self.factory.host['vm_name']))
+        self.timeout = None
+        self.loseConnection()
 
     def dataReceived(self, data):
         self.received_data += data
         tty_utils.ttylog_write(self.ttylogFile, len(data), tty_utils.TYPE_OUTPUT, time.time(), data)
-        self.factory.log.msg('[%s] receiving data' % (self.factory.host['vm_name']))
+        # self.factory.log.msg('[%s] receiving data' % (self.factory.host['vm_name']))
 
     def request_exit_status(self, data):
         status = struct.unpack('>L', data)[0]
         self.factory.log.msg('[%s] request_exit_status' % (self.factory.host['vm_name']))
         j = {"eventid": "explorer.exec",
              "exitcode": status,
-             "cmd": base64.b64encode(self.cmd['complete_cmd']).decode('utf-8'),
+             "cmd": base64.b64encode(self.cmd['complete_cmd'].encode()).decode('utf-8'),
              "cmd_hash": self.cmd_hash,
              "output": base64.b64encode(self.received_data).decode('utf-8'),
              "outputfile": self.ttyName,
@@ -93,3 +104,5 @@ class Terminal(channel.SSHChannel):
 
     def closed(self):
         self.factory.log.msg('[%s] channel closed' % (self.factory.host['vm_name']))
+        if self.timeout:
+            self.timeout.cancel()
