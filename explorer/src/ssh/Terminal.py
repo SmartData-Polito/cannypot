@@ -69,6 +69,7 @@ class Terminal(channel.SSHChannel):
             info.write(self.cmd['complete_cmd'] + "\n")
         with open(self.output_dir + self.cmd_hash + "/index.txt", 'a') as info:
             info.write(t + "\t")
+            info.write(self.sessionid + "\t")
             info.write(self.factory.host['vm_name'] + "\t")
             info.write(self.ttyName + "\n")
 
