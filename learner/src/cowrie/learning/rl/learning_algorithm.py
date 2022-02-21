@@ -59,9 +59,9 @@ class CentralAlgorithm:
 
     def save_dict_q_table(self):
         output_dir = CowrieConfig.get('learning', 'output_dir')
-        pathlib.Path(output_dir+'dict/').mkdir(parents=True, exist_ok=True)
+        pathlib.Path(output_dir+'ckb/dictionary/').mkdir(parents=True, exist_ok=True)
         pathlib.Path(output_dir+'qtable/').mkdir(parents=True, exist_ok=True)
-        dict_filename = '%sdict/dict-%s.json' % (output_dir, time.strftime('%Y%m%d-%H%M%S'))
+        dict_filename = '%sckb/dictionary/dict-%s.json' % (output_dir, time.strftime('%Y%m%d-%H%M%S'))
         q_table_filename = '%sqtable/q_table-%s.json' % (output_dir, time.strftime('%Y%m%d-%H%M%S'))
         with open(dict_filename, 'w') as file:
             json.dump(self.command_dict.outputs, file, indent=4)
