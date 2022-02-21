@@ -15,10 +15,15 @@ class Terminal(channel.SSHChannel):
 
     name = "session"
 
-    def __init__(self, conn=None, cmd=None, server=None, factory=None):
+    def __init__(self, conn=None,
+                        cmd=None,
+                        server=None,
+                        factory=None,
+                        sessionid=None):
         self.cmd = cmd
         self.server = server
         self.factory = factory
+        self.sessionid = sessionid
         self.ttylogFile = None
         self.received_data = b''
         self.output_dir = self.factory.config.output_dir
@@ -60,6 +65,13 @@ class Terminal(channel.SSHChannel):
         d.addCallback(self.send_eof)
         self.factory.log.msg('[%s] command sent' % (self.factory.host['vm_name']))
 
+        with open(self.output_dir + self.cmd_hash + "/info.txt", 'w') as info:
+            info.write(self.cmd['complete_cmd'] + "\n")
+        with open(self.output_dir + self.cmd_hash + "/index.txt", 'a') as info:
+            info.write(t + "\t")
+            info.write(self.factory.host['vm_name'] + "\t")
+            info.write(self.ttyName + "\n")
+
     def send_eof(self, ignored):
         self.conn.sendEOF(self)
         self.factory.log.msg('[%s] eof sent' % (self.factory.host['vm_name']))
@@ -79,6 +91,7 @@ class Terminal(channel.SSHChannel):
         status = struct.unpack('>L', data)[0]
         self.factory.log.msg('[%s] request_exit_status' % (self.factory.host['vm_name']))
         j = {"eventid": "explorer.exec",
+             "sessionid": str(self.sessionid),
              "exitcode": status,
              "cmd": base64.b64encode(self.cmd['complete_cmd'].encode()).decode('utf-8'),
              "cmd_hash": self.cmd_hash,
