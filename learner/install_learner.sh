@@ -10,15 +10,33 @@ if [ "$#" -ne 1 ]; then
     exit 1
 fi
 
+if [ "$#" -ne 2 ]; then
+    REINSTALL=$2
+fi
+
 # where things are installed
 PREFIX=$(realpath $1)
 mkdir -p $PREFIX
 
-# TODO if prefix already exists and the learner is already installed
-#      ask if you want to remove and reinstall or block the installation
-
 echo "checking out cowrie base code"
 cd $PREFIX
+
+# if learner is already installed within PREFIX/cowrie
+# don't do anything
+# but prompt rerun with parameter if you want to remove and reinstall learner
+
+
+if [ -d "cowrie/" ] && echo "Directory cowrie/ exists."; then
+    echo "Learner installation already exists in PREFIX/cowrie.\nIf you want to overwrite it, set REINSTALL parameter to YES.\nUsage: install_learner.sh PREFIX YES"
+    exit 1
+fi
+
+if [ "$REINSTALL" = "YES" ]; then
+    # Remove old learner installation 
+    # Typically inside PREFIX/cowrie
+    rm -rf cowrie/
+fi
+
 git clone https://github.com/cowrie/cowrie
 cd cowrie
 git checkout $COWRIE 2>&1>/dev/null
