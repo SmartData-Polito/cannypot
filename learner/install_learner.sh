@@ -14,6 +14,9 @@ fi
 PREFIX=$(realpath $1)
 mkdir -p $PREFIX
 
+# TODO if prefix already exists and the learner is already installed
+#      ask if you want to remove and reinstall or block the installation
+
 echo "checking out cowrie base code"
 cd $PREFIX
 git clone https://github.com/cowrie/cowrie
