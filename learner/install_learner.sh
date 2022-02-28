@@ -24,17 +24,17 @@ cd $PREFIX
 # don't do anything
 # but prompt rerun with parameter if you want to remove and reinstall learner
 
-
 if [ -d "cowrie/" ] && echo "Directory cowrie/ exists."; then
-    echo "Learner installation already exists in PREFIX/cowrie."
-    echo "If you want to overwrite it run install_learner.sh PREFIX YES"
-    exit 1
-fi
 
-if [ "$REINSTALL" = "YES" ]; then
-    # Remove old learner installation 
-    # Typically inside PREFIX/cowrie
-    rm -rf cowrie/
+    if [ "$REINSTALL" = "YES" ]; then
+        # Remove old learner installation 
+        # Typically inside PREFIX/cowrie
+        rm -rf cowrie/
+    else
+        echo "Learner installation already exists in PREFIX/cowrie."
+        echo "If you want to overwrite it run install_learner.sh PREFIX YES"
+        exit 1
+    fi
 fi
 
 git clone https://github.com/cowrie/cowrie
