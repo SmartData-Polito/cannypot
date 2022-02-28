@@ -5,8 +5,9 @@ COWRIE="tags/v2.3.0"
 set -e
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-if [ "$#" -ne 1 ]; then
-    echo "Missing PREFIX parameter. Usage: install_learner.sh PREFIX"
+if [ "$#" -ne 1 ] && [ "$#" -ne 2 ]; then
+    echo "Missing PREFIX parameter. Usage: install_learner.sh PREFIX REINSTALL"
+    echo "REINSTALL is optional and can be YES or NO. If YES reinstall learner even if already installed."
     exit 1
 fi
 
