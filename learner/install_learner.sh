@@ -11,9 +11,7 @@ if [ "$#" -ne 1 ] && [ "$#" -ne 2 ]; then
     exit 1
 fi
 
-if [ "$#" -ne 2 ]; then
-    REINSTALL=$2
-fi
+REINSTALL=$2
 
 # where things are installed
 PREFIX=$(realpath $1)
