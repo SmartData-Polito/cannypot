@@ -27,7 +27,8 @@ cd $PREFIX
 
 
 if [ -d "cowrie/" ] && echo "Directory cowrie/ exists."; then
-    printf "Learner installation already exists in PREFIX/cowrie.\nIf you want to overwrite it, set REINSTALL parameter to YES.\nUsage: install_learner.sh PREFIX YES"
+    echo "Learner installation already exists in PREFIX/cowrie."
+    echo "If you want to overwrite it run install_learner.sh PREFIX YES"
     exit 1
 fi
 
