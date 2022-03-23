@@ -121,6 +121,12 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         """
         this logs out when connection times out
         """
+
+        # TODO is this useful?
+        log.msg("Timeout connection in protocol.py")
+        #if CowrieConfig.getboolean('learning', 'reinforcement_mode'):
+        #    self.learning_env.connection_closed_dirty()
+
         ret = failure.Failure(error.ProcessTerminated(exitCode=1))
         self.terminal.transport.processEnded(ret)
 
@@ -139,10 +145,13 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.user = None
         self.environ = None
 
-        #if CowrieConfig.getboolean('learning', 'reinforcement_mode'):
-            #self.learning_env.connection_closed()
 
-        self.learning_env = None
+        log.msg("Connection lost in protocol.py")
+        # TODO why this line is commented???
+        #if CowrieConfig.getboolean('learning', 'reinforcement_mode'):
+        #    self.learning_env.connection_closed_dirty()
+
+        #self.learning_env = None
 
     def txtcmd(self, txt):
         class Command_txtcmd(command.HoneyPotCommand):

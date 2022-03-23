@@ -19,11 +19,13 @@ class HoneypotTerminalEmulator:
 
     def run_command(self, cmd):
         if cmd['command'] == 'exit' or cmd['command'] == 'Exit':
+            log.msg("Honeypot terminal emulator exiting")
             # updates = self.honeypot.protocol.learning_env.connection_closed()
             # self.honeypot.protocol.user.avatar.learning_handler.episode_finished(updates)
             stat = failure.Failure(error.ProcessDone(status=""))
             self.honeypot.protocol.terminal.transport.processEnded(stat)
         else:
+            log.msg("Honeypot terminal emulator receiving command:", cmd)
             output = self.honeypot.protocol.learning_env.command_received(cmd['command'], cmd['rargs'])
             # if 'CMD_not_found' in output:
             #     self.honeypot.protocol.terminal.write('-bash: {}: command not found\n'.format(cmd['command']).encode('utf8'))

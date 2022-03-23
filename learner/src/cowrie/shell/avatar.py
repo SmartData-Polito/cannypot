@@ -58,13 +58,14 @@ class CowrieUser(avatar.ConchUser):
                 b"direct-tcpip"
             ] = forwarding.cowrieOpenConnectForwardingClient
 
-        # Learning episode END
-        if CowrieConfig.getboolean('learning', 'reinforcement_mode'):
-            updates = self.learning_env.connection_closed()
-            self.learning_handler.episode_finished(updates)
 
     def logout(self) -> None:
         log.msg(f"avatar {self.username} logging out")
+        # Learning episode END
+        if CowrieConfig.getboolean('learning', 'reinforcement_mode'):
+            log.msg("User logged out. RL closing the connection")
+            updates = self.learning_env.connection_closed()
+            self.learning_handler.episode_finished(updates)
 
     def lookupChannel(self, channelType, windowSize, maxPacket, data):
         """

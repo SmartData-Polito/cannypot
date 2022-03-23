@@ -22,7 +22,7 @@ from cowrie.ssh import transport as shellTransport
 from cowrie.ssh.userauth import HoneyPotSSHUserAuthServer
 from cowrie.ssh_proxy import server_transport as proxyTransport
 from cowrie.ssh_proxy.userauth import ProxySSHAuthServer
-from cowrie.learning.rl.learning_wrapper import LearningAlgHandler
+from cowrie.learning.rl.algorithm_handler import LearningAlgHandler
 
 # object is added for Python 2.7 compatibility (#1198) - as is super with args
 class CowrieSSHFactory(factory.SSHFactory):

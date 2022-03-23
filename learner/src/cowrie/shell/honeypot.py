@@ -241,13 +241,12 @@ class HoneyPotShell:
 
         cmdAndArgs = self.cmdpending.pop(0)
         cmd2 = copy.copy(cmdAndArgs)
-
-        ##### RL PART
         complete_cmd = cmdAndArgs[0]
         for arg in cmdAndArgs[1:]:
             complete_cmd += ' '
             complete_cmd += arg
 
+        # If RL is active and RL knows the command
         if CowrieConfig.getboolean('learning', 'reinforcement_mode') and \
                 self.protocol.learning_env.learning_alg.command_dict.isCommandInDict(complete_cmd):
             # CANNYPOT part
@@ -258,18 +257,20 @@ class HoneyPotShell:
             HoneypotTerminalEmulator(honeypot=self).run_command(cmd)
 
         else:
-            # COWRIE part
 
+            # If RL is active and RL does NOT know the command
             if CowrieConfig.getboolean('learning', 'reinforcement_mode'):
                 log.msg(eventid='cannypot.learning.input.failed', known=0, input=complete_cmd,
                         format='RL unknown command: %(input)s')
+                # Save as unknown command and then proceed with standard Cowrie part
                 cmd = dict()
                 cmd['command'] = cmdAndArgs[0]
                 cmd['rargs'] = cmdAndArgs[1:]
                 if cmd['command'] != 'exit' and cmd['command'] != 'Exit':
                     self.protocol.learning_env.unknown_commands.append(cmd)
 
-            ####### END RL PART
+
+            # COWRIE part
 
             # Probably no reason to be this comprehensive for just PATH...
             environ = copy.copy(self.environ)
@@ -334,7 +335,7 @@ class HoneyPotShell:
                             cmd["rargs"],
                             None,
                             lastpp,
-                            self. self.redirect,
+                            self.redirect,
                         )
                         lastpp = pp
                 else:

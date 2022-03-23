@@ -2,6 +2,7 @@ from twisted.python import log
 import numpy as np
 import copy
 from cowrie.core.config import CowrieConfig
+from cowrie.learning.rl.learning_job import Job
 import collections
 
 
@@ -25,7 +26,7 @@ class LearningEnv:
     def init_learning_alg(self, alg):
         self.learning_alg = alg
         self.initial_qtable = copy.deepcopy(alg.q_table)
-        log.msg(input='cannypot.manager', format="Reinforcement learning logic for the session initialized")
+        log.msg(eventid='cannypot.manager', format="Reinforcement learning logic for the session initialized")
         log.msg(eventid='cannypot.learning.episode', format='RL episode started')
 
     def command_received(self, command, args):
@@ -86,7 +87,8 @@ class LearningEnv:
 
     def connection_closed(self):
         '''
-        The connection with the attacker is closed
+        The connection with the attacker is closed (clean exit)
+
 
         '''
         self.state_array.append('exit')
@@ -99,6 +101,7 @@ class LearningEnv:
         q_table, ep_reward, steps = self.learning_alg.attacker_exited(state)
         log.msg(eventid='cannypot.learning.episode', reward=str(ep_reward), format='RL episode finished. Reward: %(reward)s')
 
+        log.msg("Connection closed normally. Starting job in the environment")
         job = Job()
         job.calculateDifferenceTable(self.initial_qtable, q_table)
         job.insertNewCommands(self.unknown_commands)
@@ -107,39 +110,26 @@ class LearningEnv:
         job.insertQtableUpdates(self.learning_alg.qtable_updates)
         return job
 
+    def connection_closed_dirty(self):
+        '''
+        The connection with the attacker is closed 
+        '''
+        self.state_array.append('exit')
 
-class Job:
+        # Find the state starting from the list of commands received
+        # and check if the state is already present in the q-table, otherwise the state is added
+        state = '#'.join(self.state_array)
+        if state not in self.learning_alg.q_table:
+            self.learning_alg.q_table[state] = [0]
+        q_table, ep_reward, steps = self.learning_alg.attacker_exited(state)
+        log.msg(eventid='cannypot.learning.episode', reward=str(ep_reward), format='RL episode finished. Reward: %(reward)s')
 
-    def __init__(self):
-        self.difference_table = {}
-        self.new_commands = []
-        self.episode_stats = {}
-        self.qtable_updates = []
+        log.msg("Connection closed dirty. Starting job in the environment")
+        job = Job()
+        job.calculateDifferenceTable(self.initial_qtable, q_table)
+        job.insertNewCommands(self.unknown_commands)
+        job.insertEpisodeStats(episode_reward=ep_reward, steps=steps,
+                               different_commands=self.commands_found)
+        job.insertQtableUpdates(self.learning_alg.qtable_updates)
 
-    def calculateDifferenceTable(self, initial_qtable, final_qtable):
-        for state in list(final_qtable.keys()):
-            if state not in initial_qtable.keys():
-                self.difference_table[state] = np.zeros(len(final_qtable[state])).tolist()
-
-    def insertNewCommands(self, new_commands_list):
-        self.new_commands = new_commands_list
-
-    def insertQtableUpdates(self, updates):
-        self.qtable_updates = updates
-
-    def getDifferenceTable(self):
-        return self.difference_table
-
-    def getNewCommands(self):
-        return self.new_commands
-
-    def insertEpisodeStats(self, episode_reward, steps, different_commands):
-        self.episode_stats['episode_reward'] = episode_reward
-        self.episode_stats['steps'] = steps
-        self.episode_stats['different_commands'] = different_commands
-
-    def getEpisodeStats(self):
-        return self.episode_stats
-
-    def getUpdates(self):
-        return self.qtable_updates
+        return job
