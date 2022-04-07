@@ -40,36 +40,40 @@ class HoneypotTerminalEmulator:
 
         stdout = self.honeypot.protocol.terminal
         dict_dir_path = CowrieConfig.get('dictionary', 'dict_dir_path')
-        with open(dict_dir_path + out_filename, 'rb') as fd:
-            log.msg(eventid='cannypot.learning.output',
-                    format='Possible output file found')
-            while 1:
-                try:
-                    (op, tty, length, dir, sec, usec) = \
-                        struct.unpack('<iLiiLL', fd.read(ssize))
-                    data = fd.read(length)
-                except struct.error:
-                    break
+        try:
+            with open(dict_dir_path + out_filename, 'rb') as fd:
+                log.msg(eventid='cannypot.learning.output',
+                        format='Possible output file found')
+                while 1:
+                    try:
+                        (op, tty, length, dir, sec, usec) = \
+                            struct.unpack('<iLiiLL', fd.read(ssize))
+                        data = fd.read(length)
+                    except struct.error:
+                        break
 
-                if currtty == 0:
-                    currtty = tty
+                    if currtty == 0:
+                        currtty = tty
 
-                if str(tty) == str(currtty) and op == OP_WRITE:
-                    # the first stream seen is considered 'output'
-                    if prefdir == 0:
-                        prefdir = dir
-                        # use the other direction
-                    if dir == TYPE_INTERACT:
-                        color = b'\033[36m'
-                    elif dir == TYPE_INPUT:
-                        color = b'\033[33m'
-                    if dir == prefdir:
-                        curtime = float(sec) + float(usec) / 1000000
-                        if prevtime != 0:
-                            sleeptime = curtime - prevtime
-                            time.sleep(sleeptime)
-                        prevtime = curtime
-                        reactor.callFromThread(stdout.write, data)
-                elif str(tty) == str(currtty) and op == OP_CLOSE:
-                    break
+                    if str(tty) == str(currtty) and op == OP_WRITE:
+                        # the first stream seen is considered 'output'
+                        if prefdir == 0:
+                            prefdir = dir
+                            # use the other direction
+                        if dir == TYPE_INTERACT:
+                            color = b'\033[36m'
+                        elif dir == TYPE_INPUT:
+                            color = b'\033[33m'
+                        if dir == prefdir:
+                            curtime = float(sec) + float(usec) / 1000000
+                            if prevtime != 0:
+                                sleeptime = curtime - prevtime
+                                time.sleep(sleeptime)
+                            prevtime = curtime
+                            reactor.callFromThread(stdout.write, data)
+                    elif str(tty) == str(currtty) and op == OP_CLOSE:
+                        break
+                reactor.callFromThread(self.honeypot.runOrPrompt)
+        except FileNotFoundError:
+            log.msg("File not found: " + dict_dir_path + out_filename + ". Not doing anything")
             reactor.callFromThread(self.honeypot.runOrPrompt)

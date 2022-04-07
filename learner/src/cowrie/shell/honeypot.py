@@ -254,6 +254,10 @@ class HoneyPotShell:
             cmd['command'] = cmdAndArgs.pop(0)
             cmd['rargs'] = cmdAndArgs
 
+            if cmd['command'] != 'exit' and cmd['command'] != 'Exit':
+                    # Add commands to store the session
+                    self.protocol.learning_env.commands_in_session.append(cmd)
+
             HoneypotTerminalEmulator(honeypot=self).run_command(cmd)
 
         else:
@@ -267,7 +271,9 @@ class HoneyPotShell:
                 cmd['command'] = cmdAndArgs[0]
                 cmd['rargs'] = cmdAndArgs[1:]
                 if cmd['command'] != 'exit' and cmd['command'] != 'Exit':
+                    # Add unknown commands and also all commands to store the session
                     self.protocol.learning_env.unknown_commands.append(cmd)
+                    self.protocol.learning_env.commands_in_session.append(cmd)
 
 
             # COWRIE part

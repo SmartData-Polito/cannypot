@@ -44,6 +44,8 @@ class CentralAlgorithm:
         finally:
             # Queue for managing modifications of the q-table and new commands
 
+            print("Command dictionary is ", self.command_dict)
+
             self.modification_queue = Queue()
 
             # Worker thread extracts from queue and works
@@ -87,28 +89,32 @@ class CentralAlgorithm:
             for update in updates:
                 _update(q_table, update['new_state'], update['current_state'], update['action'], update['reward'])
 
-        def askForNewCommands(command_dict, new_command_list):
+        def askForNewCommands(command_dict, new_command_list, commands_in_session_list):
+            # commands_in_session_list = the entire session, so IF new command list, save the entire session
             log.msg("Saving unknown commands")
             log.msg("New commands list:", new_command_list)
+            log.msg("All commands in session:", commands_in_session_list)
             new_commands_dir = CowrieConfig.get('dictionary', 'new_commands_dir')
             print(next(os.walk(new_commands_dir), (None, None, []))[2])
             pathlib.Path(new_commands_dir).mkdir(exist_ok=True)
-            # TODO could consider parser here
-            # TODO should save entire session -> save a lot of files!
+
+            # TODO could consider parser here (or before)
+
+            # Save the entire session if unknown commands are present
             if new_command_list:
                 timestr = time.strftime("%Y%m%d_%H%M%S")
                 filename = new_commands_dir + 'new_commands_' + timestr +  '_' + str(self.episode) + '.txt' 
                 with open(filename, 'w') as file:
-                    for command in new_command_list:
-                        # Should save everything
-                        if not command_dict.isCommandInDict(command):
-                            # TODO So if there is 1 command it will not be saved into the txt of 1 session --> Fix
-                            cmd = command['command']
-                            cmd += ' '
-                            cmd += ' '.join(command['rargs'])
-                            file.write(cmd+'\n')
+                    for command in commands_in_session_list:
+                        # Save every command in session
+                        # So that it can be reproduced in the explorer
+                        #if not command_dict.isCommandInDict(command):
+                        cmd = command['command']
+                        cmd += ' '
+                        cmd += ' '.join(command['rargs'])
+                        file.write(cmd+'\n')
                 log.msg(eventid='cannypot.manager', input=filename,
-                        format='New unknown commands file created: %(input)s')
+                        format='New unknown session file created: %(input)s')
 
         def saveEpisodeStats(episodeStats):
             output_dir = CowrieConfig.get('learning', 'output_dir')
@@ -150,7 +156,7 @@ class CentralAlgorithm:
                 log.msg("Job new commands:", job.getNewCommands())
                 log.msg("Job episode statistics:", job.getEpisodeStats())
 
-                askForNewCommands(self.command_dict, job.getNewCommands())
+                askForNewCommands(self.command_dict, job.getNewCommands(), job.getSessionCommands())
 
             # Check if new outputs are present to insert them into dictionary
             if CowrieConfig.getboolean('dictionary', 'look_for_new_outputs') \
@@ -194,6 +200,7 @@ class CentralAlgorithm:
     def loadLearningState(self, inputFile):
         with open(inputFile, 'rb') as f:
             state_list = pickle.load(f)
+            print(state_list)
             self.q_table = state_list[0]
             self.command_dict = state_list[1]
 

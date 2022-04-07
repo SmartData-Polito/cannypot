@@ -22,6 +22,7 @@ class LearningEnv:
         self.commands_received = []
         self.unknown_commands = []
         self.commands_found = 0
+        self.commands_in_session = []
 
     def init_learning_alg(self, alg):
         self.learning_alg = alg
@@ -105,6 +106,7 @@ class LearningEnv:
         job = Job()
         job.calculateDifferenceTable(self.initial_qtable, q_table)
         job.insertNewCommands(self.unknown_commands)
+        job.insertSessionCommands(self.commands_in_session)
         job.insertEpisodeStats(episode_reward=ep_reward, steps=steps,
                                different_commands=self.commands_found)
         job.insertQtableUpdates(self.learning_alg.qtable_updates)
@@ -128,6 +130,7 @@ class LearningEnv:
         job = Job()
         job.calculateDifferenceTable(self.initial_qtable, q_table)
         job.insertNewCommands(self.unknown_commands)
+        job.insertSessionCommands(self.commands_in_session)
         job.insertEpisodeStats(episode_reward=ep_reward, steps=steps,
                                different_commands=self.commands_found)
         job.insertQtableUpdates(self.learning_alg.qtable_updates)

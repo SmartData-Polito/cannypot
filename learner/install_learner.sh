@@ -37,7 +37,7 @@ if [ -d "cowrie/" ] && echo "Directory cowrie/ exists."; then
     fi
 fi
 
-git clone https://github.com/cowrie/cowrie
+git -c http.sslVerify=false clone https://github.com/cowrie/cowrie
 cd cowrie
 git checkout $COWRIE 2>&1>/dev/null
 cd -

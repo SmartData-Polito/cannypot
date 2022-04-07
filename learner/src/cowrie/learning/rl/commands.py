@@ -5,15 +5,17 @@ class LearningDictionary:
 
     def __init__(self, learningDict=None):
 
-        self.known_commands = []  # list of known commands
-        # TODO is this retrieved and stored in memory?
+        self.known_commands = [
+            'ls'
+        ]  # list of known commands
+        # This is retrieved and stored in memory
         self.command_outputs = {
             'unknown_command': 'CMD_not_found',
-            #'ls': 'this_output'
+            'ls': 'this_output'
         }
         self.outputs = {
             'CMD_not_found': ['CMD_not_found'],
-            #'this_output': ['this_exactly'],
+            'this_output': ['this_exactly'],
         }
 
         if learningDict is not None:
