@@ -6,7 +6,7 @@ import getopt
 import libvirt
 import paramiko
 
-TIMEOUT = 15 # Time until force vm down
+TIMEOUT = 15 # Time until force vm down (in seconds)
 
 def get_hosts_infos(filename, log):
     hosts = []
@@ -20,6 +20,8 @@ def get_hosts_infos(filename, log):
             host['user'] = row[2]
             host['password'] = row[3]
             host['vm_name'] = row[4]
+            host['session_counter'] = 0
+            host['domain'] = None
             hosts.append(host)
             log.msg("registering backend:", host['vm_name'], host['address'], host['port'])
     return hosts
@@ -73,8 +75,7 @@ def create_vm_snapshot(host, filename, log, reactor):
         return None
 
     # shut the VM down if it remained active during last cycle
-    shutoff_vm(host['vm_name'], dom, log)
-
+    #shutoff_vm(host['vm_name'], dom, log)
 
     # check if current snapshot exists and creates one otherwise
     try:

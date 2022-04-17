@@ -45,6 +45,7 @@ class CannyExplorer:
         # config the input / output folders
         self.config.output_dir = root_path + "/" + self.config.get('backend', 'output_dir')
         self.config.input_dir = root_path + "/" + self.config.get('backend', 'input_dir')
+        self.config.json_dir = root_path + "/" + self.config.get('backend', 'json_dir')
         pathlib.Path(self.config.output_dir).mkdir(parents=True, exist_ok=True)
         pathlib.Path(self.config.input_dir).mkdir(parents=True, exist_ok=True)
 
@@ -74,10 +75,17 @@ class CannyExplorer:
 
     def shutdown_process(self):
         log.msg("[explorer] shutting down")
+        for host in self.hosts_list:
+            manager.shutoff_vm(host['vm_name'], host['domain'], log)
 
     def vm_complete(self, host, domain):
-        # shut the VM down
+        #if host['bootfreq'] == host['session_counter']:
+            # shut the VM down
         manager.shutoff_vm(host['vm_name'], domain, log)
+            #host['session_counter'] = 0
+        #else:
+            #host['session_counter'] = host['session_counter'] + 1
+
         self.working -= 1
 
         log.msg("[%s] complete backend cycle on [%s:%s]" % (host['vm_name'], host['address'], host['port']))
@@ -100,14 +108,28 @@ class CannyExplorer:
         if self.paths and not self.working:
             # Get the first path from the queue
             self.filename = self.paths[0].path
+            cmds = manager.get_cmds_list(self.filename)
+            if not cmds:
+                log.msg("%s input commands empty" % (self.filename))
+
+                # remove the invalid file
+                del self.paths[0]
+                os.remove(self.filename)
+                log.msg("removing %s " % self.filename)
+
+                reactor.callLater(0, self.process_file)
+                return
 
             log.msg("[explorer] processing %s queue size %d" % (self.filename, len(self.paths)))
 
             for host in self.hosts_list:
+                #if not host['domain'] or host['bootfreq'] == host['session_counter']:
                 domain = manager.create_vm_snapshot(host, self.filename, log, reactor)
-                if domain:
+                host['domain'] = domain
+
+                if host['domain']:
                     self.working += 1
-                    factory = CannyClientFactory(host, domain, manager.get_cmds_list(self.filename), log, self)
+                    factory = CannyClientFactory(host, host['domain'], cmds, log, self)
                     factory.protocol = ClientTransport
                     log.msg("[%s] connecting to backend on [%s:%s]" % (host['vm_name'], host['address'], host['port']))
                     reactor.connectTCP(host['address'], int(host['port']), factory)
