@@ -63,6 +63,8 @@ class LearningEnv:
             complete_cmd += arg
         log.msg(eventid='cannypot.learning.input', input=complete_cmd, format='RL received command: %(input)s')
 
+        # TODO What if the received command is the parsed one? Should I update the q table? Also if I answered with that output?
+
         # Check if inside dictionary we know one output for the command
         if not self.learning_alg.command_dict.isCommandInDict(complete_cmd):
             complete_cmd = 'unknown_command'
