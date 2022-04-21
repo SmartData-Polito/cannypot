@@ -27,6 +27,7 @@ class Terminal(channel.SSHChannel):
         self.ttylogFile = None
         self.received_data = b''
         self.output_dir = self.factory.config.output_dir
+        self.json_dir = self.factory.config.json_dir
 
         self.timeout = None
 
@@ -50,6 +51,7 @@ class Terminal(channel.SSHChannel):
 
 
         os.makedirs(self.output_dir + self.cmd_hash, exist_ok=True)
+        os.makedirs(self.json_dir, exist_ok=True)
         t = time.strftime("%Y%m%d_%H%M%S")
         day = time.strftime("%Y%m%d")
         self.ttylogFile = self.output_dir + self.cmd_hash + '/ttylog_' + self.cmd_hash + \
@@ -57,7 +59,7 @@ class Terminal(channel.SSHChannel):
         self.ttyName = 'ttylog_' + self.cmd_hash + \
                           '_' + tty_utils.make_safe_filename(self.server) + '_' + t
 
-        self.log_file = self.output_dir + self.factory.config.get('log', 'explorer_log_file') + '.' + day
+        self.log_file = self.json_dir + self.factory.config.get('log', 'explorer_json_file') + '.' + day
         tty_utils.ttylog_open(self.ttylogFile, time.time())
 
         self.factory.log.msg('[%s] sending command: %s' % (self.factory.host['vm_name'], self.cmd))

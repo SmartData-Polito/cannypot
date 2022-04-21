@@ -9,7 +9,7 @@ class CannyClientFactory(protocol.ClientFactory):
         self.host = host
         self.domain = domain
         self.config = explorer.config
-        self.cmds = cmds
+        self.cmds = cmds.copy()
         self.log = log
         self.retry = 0
         self.log.msg("[%s] executing commands [%s]" % (host['vm_name'], cmds))
