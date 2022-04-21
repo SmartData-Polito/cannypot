@@ -6,6 +6,7 @@ from twisted.internet import error
 from cowrie.core.config import CowrieConfig
 
 from twisted.python import log
+import hashlib
 
 
 OP_OPEN, OP_CLOSE, OP_WRITE, OP_EXEC = 1, 2, 3, 4
@@ -17,7 +18,7 @@ class HoneypotTerminalEmulator:
     def __init__(self, honeypot):
         self.honeypot = honeypot
 
-    def run_command(self, cmd):
+    def run_command(self, cmd, complete_cmd):
         if cmd['command'] == 'exit' or cmd['command'] == 'Exit':
             log.msg("Honeypot terminal emulator exiting")
             # updates = self.honeypot.protocol.learning_env.connection_closed()
@@ -32,7 +33,12 @@ class HoneypotTerminalEmulator:
             #     self.honeypot.runOrPrompt()
             # else:
             #     reactor.callInThread(self._playlog, output.strip())
-            reactor.callInThread(self._playlog, output.strip())
+
+            # TODO should compute the hash/base64 somewhere here
+            log.msg("THIS IS THE OUTPUT", output)
+            # TODO maybe here it is the filename, so I should add the hashlib.md5(complete_cmd.encode('utf-8')).hexdigest() of the complete_cmd
+            output_file = hashlib.md5(complete_cmd.encode('utf-8')).hexdigest() + "/" + output.strip()
+            reactor.callInThread(self._playlog, output_file)
 
     def _playlog(self, out_filename):
         ssize = struct.calcsize('<iLiiLL')

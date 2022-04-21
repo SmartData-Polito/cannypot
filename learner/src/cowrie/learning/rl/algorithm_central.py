@@ -34,8 +34,13 @@ class CentralAlgorithm:
         self.cumulative_reward = 0
         self.episode = 0
         self.runs = 0
-        self.dict_update_period = int(CowrieConfig.get('dictionary', 'dict_update_frequency'))
+        self.dict_update_period = int(CowrieConfig.get('dictionary', 'dict_update_frequency'))  # TODO what's the purpose of this variable if it is never used?
         learning_state_file = CowrieConfig.get('learning', 'learning_state')
+
+        # Initialize them also before the try catch
+        self.q_table = {}
+        self.command_dict = LearningDictionary()
+
         try:
             self.loadLearningState(learning_state_file)
         except FileNotFoundError:
@@ -64,7 +69,9 @@ class CentralAlgorithm:
         output_dir = CowrieConfig.get('learning', 'output_dir')
         pathlib.Path(output_dir+'ckb/dictionary/').mkdir(parents=True, exist_ok=True)
         pathlib.Path(output_dir+'qtable/').mkdir(parents=True, exist_ok=True)
-        dict_filename = '%sckb/dictionary/dict-%s.json' % (output_dir, time.strftime('%Y%m%d-%H%M%S'))
+        #dict_filename = '%sckb/dictionary/dict-%s.json' % (output_dir, time.strftime('%Y%m%d-%H%M%S'))
+        # Update dict while saving history of qtable
+        dict_filename = '%sckb/dictionary/dict.json'  % (output_dir)
         q_table_filename = '%sqtable/q_table-%s.json' % (output_dir, time.strftime('%Y%m%d-%H%M%S'))
         with open(dict_filename, 'w') as file:
             json.dump(self.command_dict.outputs, file, indent=4)
@@ -200,7 +207,8 @@ class CentralAlgorithm:
     def loadLearningState(self, inputFile):
         with open(inputFile, 'rb') as f:
             state_list = pickle.load(f)
-            print(state_list)
+            log.msg("Reading saved state file")
+            log.msg(state_list)
             self.q_table = state_list[0]
             self.command_dict = state_list[1]
 
@@ -218,30 +226,47 @@ class CentralAlgorithm:
         dict_dir_path = CowrieConfig.get('dictionary', 'dict_dir_path')
         pathlib.Path(new_outputs_dir).mkdir(exist_ok=True, parents=True)
         pathlib.Path(dict_dir_path).mkdir(exist_ok=True, parents=True)
-        new_commands = os.listdir(new_outputs_dir)
-        filtered_new_commands = [d for d in new_commands if time.time() - os.path.getmtime(new_outputs_dir+d) > 60]
-        if filtered_new_commands:
-            log.msg(eventid='cannypot.manager', input=str(new_commands),
+        new_explorer_files = os.listdir(new_outputs_dir)
+
+        # The name of the file is computed in Terminal.py in the Explorer has:
+        # self.cmd_hash = hashlib.md5(self.cmd['complete_cmd'].encode('utf-8')).hexdigest()
+
+        filtered_hash_commands = [d for d in new_explorer_files]
+        if filtered_hash_commands:
+            log.msg(eventid='cannypot.manager', input=str(filtered_hash_commands),
                     format='New outputs files found: %(input)s')
-        for new_cmd in filtered_new_commands:
-            with open(new_outputs_dir + new_cmd + '/info.txt', 'r') as info_file:
+
+        for hash_cmd in filtered_hash_commands:
+            with open(new_outputs_dir + hash_cmd + '/info.txt', 'r') as info_file:
                 complete_cmd = info_file.readline().rstrip('\n')
                 info_file.close()
-            os.remove(new_outputs_dir + new_cmd + '/info.txt')
             if not cmds_dict.isCommandInDict(complete_cmd):
                 cmds_dict.addCommandInDict(complete_cmd)
-            for out_file in os.listdir(new_outputs_dir + new_cmd):
+                os.mkdir(dict_dir_path + hash_cmd)
+                # Check if info.txt and index.txt exist and in case move them
+                if os.path.isfile(new_outputs_dir + hash_cmd + '/info.txt'):
+                    os.replace(new_outputs_dir + hash_cmd + '/info.txt', dict_dir_path + hash_cmd + '/info.txt')  # I am keeping info.txt because could be useful
+                if os.path.isfile(new_outputs_dir + hash_cmd + '/index.txt'):
+                    os.replace(new_outputs_dir + hash_cmd + '/index.txt', dict_dir_path + hash_cmd + '/index.txt')  # I am keeping index.txt because could be useful
+            for out_file in os.listdir(new_outputs_dir + hash_cmd):
+                # TODO It could check here if empty or if it is the same as the other outputs!!
                 if CowrieConfig.getint('dictionary', 'max_outputs_for_command') > cmds_dict.getNumOutputsForCommand(complete_cmd):
                     cmds_dict.addOutputForCommand(complete_cmd, out_file)
-                    os.rename(new_outputs_dir + new_cmd + '/' + out_file, dict_dir_path + out_file)
+                    os.rename(new_outputs_dir + hash_cmd + '/' + out_file, dict_dir_path + hash_cmd + '/' + out_file)
                 else:
-                    os.remove(new_outputs_dir + new_cmd + '/' + out_file)
-            os.rmdir(new_outputs_dir + new_cmd + '/')
-            log.msg(eventid='cannypot.manager', input=str(new_cmd),
+                    # TODO extra outputs are simply removed and not taken into account!!!
+                    # TODO Maybe this could be changed, maybe put updated outputs, or perform aggregation here
+                    # TODO what about random comamnds
+                    os.remove(new_outputs_dir + hash_cmd + '/' + out_file)
+            # Remove the directory with all outputs for the same command compute by the explorer
+            os.rmdir(new_outputs_dir + hash_cmd + '/')
+            log.msg(eventid='cannypot.manager', input=str(hash_cmd),
                     format='New outputs for cmd: %(input)s')
 
     def saveLearningState(self, outputFile, q_table, command_dict):
         state_dir = CowrieConfig.get('learning', 'learning_state_dir')
+        # TODO check what's saved here and if it is saved correctly: for now seems to be
+        log.msg("Saving state")
         pathlib.Path(state_dir).mkdir(exist_ok=True)
         with open(outputFile, 'wb') as f:
             pickle.dump([q_table, command_dict], f, pickle.HIGHEST_PROTOCOL)
