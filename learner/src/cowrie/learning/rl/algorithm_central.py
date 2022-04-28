@@ -102,7 +102,7 @@ class CentralAlgorithm:
             log.msg("New commands list:", new_command_list)
             log.msg("All commands in session:", commands_in_session_list)
             new_commands_dir = CowrieConfig.get('dictionary', 'new_commands_dir')
-            print(next(os.walk(new_commands_dir), (None, None, []))[2])
+            #print(next(os.walk(new_commands_dir), (None, None, []))[2])
             pathlib.Path(new_commands_dir).mkdir(exist_ok=True)
 
             # TODO could consider parser here (or before)
