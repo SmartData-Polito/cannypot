@@ -7,6 +7,7 @@ import csv
 import pickle
 import os
 import json
+import hashlib
 import time
 from cowrie.learning.rl.commands import LearningDictionary
 from cowrie.learning.rl.algorithm_instance import ReinforcementAlg
@@ -109,19 +110,31 @@ class CentralAlgorithm:
 
             # Save the entire session if unknown commands are present
             if new_command_list:
-                timestr = time.strftime("%Y%m%d_%H%M%S")
-                filename = new_commands_dir + 'new_commands_' + timestr +  '_' + str(self.episode) + '.txt' 
-                with open(filename, 'w') as file:
-                    for command in commands_in_session_list:
-                        # Save every command in session
-                        # So that it can be reproduced in the explorer
-                        #if not command_dict.isCommandInDict(command):
-                        cmd = command['command']
-                        cmd += ' '
-                        cmd += ' '.join(command['rargs'])
-                        file.write(cmd+'\n')
-                log.msg(eventid='cannypot.manager', input=filename,
-                        format='New unknown session file created: %(input)s')
+                complete_cmd_list = []
+                # Convert into list of commands (no dictionary)
+                for command in commands_in_session_list:
+                    # Save every command in session
+                    # So that it can be reproduced in the explorer
+                    cmd = command['command']
+                    cmd += ' '
+                    cmd += ' '.join(command['rargs'])
+                    complete_cmd_list.append(cmd)
+
+                # Generate filename hashing the entire session (;)
+                full_session = ";".join(complete_cmd_list)
+                filename = new_commands_dir + hashlib.md5(full_session.encode('utf-8')).hexdigest()
+
+                # Check if file already exists
+                if os.path.exists(filename):
+                    log.msg(eventid='cannypot.manager', input=filename,
+                            format='New unknown session file already exists: %(input)s. Not saving duplicated session')
+                else: 
+                    # If not exist, write the file joining commands with \n
+                    with open(filename, 'w') as file:
+                        file.write("\n".join(complete_cmd_list))
+                        file.write("\n")
+                    log.msg(eventid='cannypot.manager', input=filename,
+                            format='New unknown session file created: %(input)s')
 
         def saveEpisodeStats(episodeStats):
             output_dir = CowrieConfig.get('learning', 'output_dir')

@@ -34,9 +34,7 @@ class HoneypotTerminalEmulator:
             # else:
             #     reactor.callInThread(self._playlog, output.strip())
 
-            # TODO should compute the hash/base64 somewhere here
-            log.msg("THIS IS THE OUTPUT", output)
-            # TODO maybe here it is the filename, so I should add the hashlib.md5(complete_cmd.encode('utf-8')).hexdigest() of the complete_cmd
+            # Here it is the filename, so I should add the hashlib.md5(complete_cmd.encode('utf-8')).hexdigest() of the complete_cmd
             output_file = hashlib.md5(complete_cmd.encode('utf-8')).hexdigest() + "/" + output.strip()
             reactor.callInThread(self._playlog, output_file)
 
