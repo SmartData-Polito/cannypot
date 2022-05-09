@@ -52,7 +52,7 @@ class Terminal(channel.SSHChannel):
 
         os.makedirs(self.output_dir + self.cmd_hash, exist_ok=True)
         os.makedirs(self.json_dir, exist_ok=True)
-        t = time.strftime("%Y%m%d_%H%M%S")
+        t = time.strftime("%Y%m%d_%H%M%S_%f")
         day = time.strftime("%Y%m%d")
         self.ttylogFile = self.output_dir + self.cmd_hash + '/ttylog_' + self.cmd_hash + \
                           '_' + tty_utils.make_safe_filename(self.server) + '_' + t
