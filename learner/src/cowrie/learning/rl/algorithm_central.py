@@ -279,10 +279,11 @@ class CentralAlgorithm:
                 # TODO It could check here if empty or if it is the same as the other outputs!!
                 if CowrieConfig.getint('dictionary', 'max_outputs_for_command') > cmds_dict.getNumOutputsForCommand(complete_cmd):
                     cmds_dict.addOutputForCommand(complete_cmd, out_file)
+                    # On Unix, if src is a file and dst are both files, dst it will be replaced silently if the user has permission
                     os.rename(new_outputs_dir + hash_cmd + '/' + out_file, dict_dir_path + hash_cmd + '/' + out_file)
                 else:
-                    # TODO extra outputs are simply removed and not taken into account!!!
-                    # TODO Maybe this could be changed, maybe put updated outputs, or perform aggregation here
+                    # Extra outputs are simply removed and not taken into account!
+                    # TODO Maybe this could be changed, maybe put updated outputs/random outputs
                     # TODO what about random comamnds
                     os.remove(new_outputs_dir + hash_cmd + '/' + out_file)
             # Remove the directory with all outputs for the same command compute by the explorer
