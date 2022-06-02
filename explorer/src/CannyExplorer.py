@@ -52,6 +52,10 @@ class CannyExplorer:
         # load all files already in the input folder
 
         for filename in os.listdir(path=self.config.input_dir):
+            if os.stat(self.config.input_dir + filename).st_size == 0:
+                # Removing empty files
+                os.remove(self.config.input_dir + filename)
+                continue
             log.msg("[explorer] adding new file to processing queue %s " % filename)
             self.paths.append(filepath.FilePath(self.config.input_dir + filename))
 
