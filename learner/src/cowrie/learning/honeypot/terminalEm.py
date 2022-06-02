@@ -18,21 +18,16 @@ class HoneypotTerminalEmulator:
     def __init__(self, honeypot):
         self.honeypot = honeypot
 
-    def run_command(self, cmd, complete_cmd):
-        if cmd['command'] == 'exit' or cmd['command'] == 'Exit':
+    def run_command(self, complete_cmd):
+        if complete_cmd == 'exit' or complete_cmd == 'Exit':
             log.msg("Honeypot terminal emulator exiting")
             # updates = self.honeypot.protocol.learning_env.connection_closed()
             # self.honeypot.protocol.user.avatar.learning_handler.episode_finished(updates)
             stat = failure.Failure(error.ProcessDone(status=""))
             self.honeypot.protocol.terminal.transport.processEnded(stat)
         else:
-            log.msg("Honeypot terminal emulator receiving command:", cmd)
-            output = self.honeypot.protocol.learning_env.command_received(cmd['command'], cmd['rargs'])
-            # if 'CMD_not_found' in output:
-            #     self.honeypot.protocol.terminal.write('-bash: {}: command not found\n'.format(cmd['command']).encode('utf8'))
-            #     self.honeypot.runOrPrompt()
-            # else:
-            #     reactor.callInThread(self._playlog, output.strip())
+            log.msg("Honeypot terminal emulator receiving command:", complete_cmd)
+            output = self.honeypot.protocol.learning_env.command_received(complete_cmd)
 
             # Here it is the filename, so I should add the hashlib.md5(complete_cmd.encode('utf-8')).hexdigest() of the complete_cmd
             output_file = hashlib.md5(complete_cmd.encode('utf-8')).hexdigest() + "/" + output.strip()

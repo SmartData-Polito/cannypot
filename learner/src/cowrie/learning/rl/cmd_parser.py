@@ -70,7 +70,8 @@ def _parse(cmd):
 
 
 # Change flags here to decide what to keep
-def _normalize_command(command_statements, flags=False, params=False, sort=False, executables=False):
+# TODO
+def _normalize_command(command_statements, flags=True, params=False, sort=False, executables=False):
     s = []
     # Each command can have a series of statements   
     for statement in command_statements:

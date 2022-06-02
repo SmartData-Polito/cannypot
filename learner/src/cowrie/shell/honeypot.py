@@ -35,6 +35,42 @@ class HoneyPotShell:
 
     def lineReceived(self, line: str) -> None:
         log.msg(eventid="cowrie.command.input", input=line, format="CMD: %(input)s")
+
+        # BEFORE USING PARSER CHECK WHETHER THE COMMAND IS IN DICTIONARY AND IN THAT CASE RUN IT WITH CANNYPOT
+        # Should I add or remove the trailing ';'? Also if at the beginning?
+
+        stripped_line = line.strip()
+
+        if CowrieConfig.getboolean('learning', 'reinforcement_mode'):
+            # CANNYPOT PART
+
+            # If RL is active and RL knows the command
+            if self.protocol.learning_env.learning_alg.command_dict.isCommandInDict(stripped_line):
+                log.msg("RL known command")
+                self.runLearnerCommand(stripped_line)
+                #self.showPrompt()
+                return
+
+            # If RL is active and RL does NOT know the command
+            # If RL knows a similar (parsed) command
+            elif CowrieConfig.getboolean('learning', 'use_parsed_similar_commands') and self.protocol.learning_env.learning_alg.command_dict.isParsedCommandInDict(stripped_line):
+                log.msg("RL known similar command")
+                self.runParsedLearnerCommand(stripped_line)
+                #self.showPrompt()
+                return
+
+        if CowrieConfig.getboolean('learning', 'reinforcement_mode'):
+            # RL command not found
+            log.msg(eventid='cannypot.learning.input.failed', known=0, input=line,
+                    format='RL unknown command: %(input)s')
+            # Save as unknown command and then proceed with standard Cowrie part
+            if line != 'exit' and line != 'Exit':
+                # Add unknown commands and also all commands to store the session
+                self.protocol.learning_env.unknown_commands.append(stripped_line)
+                self.protocol.learning_env.commands_in_session.append(stripped_line)
+
+        log.msg("COWRIE ANSWERING")
+        # COWRIE PART
         self.lexer = shlex.shlex(instream=line, punctuation_chars=True, posix=True)
         # Add these special characters that are not in the default lexer
         self.lexer.wordchars += "@%{}=$:+^,()`"
@@ -113,6 +149,8 @@ class HoneyPotShell:
                 self.cmdpending = []
                 self.showPrompt()
                 return
+
+        # TODO SHOULD RL BE ALSO HERE?
 
         if self.cmdpending:
             self.runCommand()
@@ -198,6 +236,41 @@ class HoneyPotShell:
         else:
             self.showPrompt()
 
+
+    def runLearnerCommand(self, line):
+        # If command is in dictionary
+        if line != 'exit' and line != 'Exit':
+            # Add commands to store the session
+            self.protocol.learning_env.commands_in_session.append(line)
+
+        HoneypotTerminalEmulator(honeypot=self).run_command(line)
+        
+
+    def runParsedLearnerCommand(self, line):
+        # If RL knows a similar (parsed) command
+        complete_similar_command = self.protocol.learning_env.learning_alg.command_dict.getParsedCommandInDict(line)
+
+        log.msg(eventid='cannypot.learning.input.failed', known=0, input=line, parsed=complete_similar_command,
+                format='RL unknown command: %(input)s but parsed similar commmand exists: %(parsed)s')
+                    
+        if line != 'exit' and line != 'Exit':
+            # Add unknown commands and also all commands to store the session
+            self.protocol.learning_env.unknown_commands.append(line)
+            self.protocol.learning_env.commands_in_session.append(line)
+
+            # To check if this split is correct
+            #similar_cmd = dict()
+            #splits = complete_similar_command.split(maxsplit=1)
+            #similar_cmd['command'] = splits[0]
+            #if len(splits) > 1:
+            #    similar_cmd['rargs'] = splits[1].split(' ')
+            #else:
+            #    similar_cmd['rargs'] = []
+
+        # Execute the similar command
+        HoneypotTerminalEmulator(honeypot=self).run_command(complete_similar_command)
+
+
     def runCommand(self):
         pp = None
 
@@ -239,6 +312,8 @@ class HoneyPotShell:
                 pass  # command with pipes
             return
 
+        # COWRIE part
+
         cmdAndArgs = self.cmdpending.pop(0)
         cmd2 = copy.copy(cmdAndArgs)
         complete_cmd = cmdAndArgs[0]
@@ -246,152 +321,89 @@ class HoneyPotShell:
             complete_cmd += ' '
             complete_cmd += arg
 
-        # If RL is active and RL knows the command
-        if CowrieConfig.getboolean('learning', 'reinforcement_mode') and \
-                self.protocol.learning_env.learning_alg.command_dict.isCommandInDict(complete_cmd):
-            # CANNYPOT part
-            cmd = dict()
-            cmd['command'] = cmdAndArgs.pop(0)
-            cmd['rargs'] = cmdAndArgs
+        # Probably no reason to be this comprehensive for just PATH...
+        environ = copy.copy(self.environ)
+        cmd_array = []
+        cmd = {}
+        while cmdAndArgs:
+            piece = cmdAndArgs.pop(0)
+            if piece.count("="):
+                key, value = piece.split("=", 1)
+                environ[key] = value
+                continue
+            cmd["command"] = piece
+            cmd["rargs"] = []
+            break
 
-            if cmd['command'] != 'exit' and cmd['command'] != 'Exit':
-                    # Add commands to store the session
-                    self.protocol.learning_env.commands_in_session.append(cmd)
+        if "command" not in cmd or not cmd["command"]:
+            self.runOrPrompt()
+            return
 
-            HoneypotTerminalEmulator(honeypot=self).run_command(cmd, complete_cmd)
-        else:
+        pipe_indices = [i for i, x in enumerate(cmdAndArgs) if x == "|"]
+        multipleCmdArgs = []
+        pipe_indices.append(len(cmdAndArgs))
+        start = 0
 
-            # If RL is active and RL does NOT know the command
-            if CowrieConfig.getboolean('learning', 'reinforcement_mode'):
-                # If RL knows a similar (parsed) command
-                if CowrieConfig.getboolean('learning', 'use_parsed_similar_commands') and self.protocol.learning_env.learning_alg.command_dict.isParsedCommandInDict(complete_cmd):
-                    
-                    complete_similar_command = self.protocol.learning_env.learning_alg.command_dict.getParsedCommandInDict(complete_cmd)
-                    
+        # Gather all arguments with pipes
+        for index, pipe_indice in enumerate(pipe_indices):
+            multipleCmdArgs.append(cmdAndArgs[start:pipe_indice])
+            start = pipe_indice + 1
 
-                    log.msg(eventid='cannypot.learning.input.failed', known=0, input=complete_cmd, parsed=complete_similar_command,
-                                            format='RL unknown command: %(input)s but parsed similar commnand exists: %(parsed)s')
+        cmd["rargs"] = parse_arguments(multipleCmdArgs.pop(0))
+        # parse_file_arguments parses too much. should not parse every argument
+        # cmd['rargs'] = parse_file_arguments(multipleCmdArgs.pop(0))
+        cmd_array.append(cmd)
+        cmd = {}
 
-                    cmd = dict()
-                    cmd['command'] = cmdAndArgs.pop(0)
-                    cmd['rargs'] = cmdAndArgs
+        for index, value in enumerate(multipleCmdArgs):
+            cmd["command"] = value.pop(0)
+            cmd["rargs"] = parse_arguments(value)
+            cmd_array.append(cmd)
+            cmd = {}
 
-                    if cmd['command'] != 'exit' and cmd['command'] != 'Exit':
-                        # Add unknown commands and also all commands to store the session
-                        self.protocol.learning_env.unknown_commands.append(cmd)
-                        self.protocol.learning_env.commands_in_session.append(cmd)
+        lastpp = None
 
-                    # TODO check if this split is correct
-                    similar_cmd = dict()
-                    splits = complete_similar_command.split(maxsplit=1)
-                    similar_cmd['command'] = splits[0]
-                    if len(splits) > 1:
-                        similar_cmd['rargs'] = splits[1].split(' ')
-                    else:
-                        similar_cmd['rargs'] = []
+        for index, cmd in reversed(list(enumerate(cmd_array))):
+            cmdclass = self.protocol.getCommand(
+            cmd["command"], environ["PATH"].split(":")
+            )
+            if cmdclass:
+                log.msg(
+                    input=cmd["command"] + " " + " ".join(cmd["rargs"]),
+                    format="Command found: %(input)s",
+                )
+                if index == len(cmd_array) - 1:
+                    lastpp = StdOutStdErrEmulationProtocol(
+                            self.protocol, cmdclass, cmd["rargs"], None, None, self.redirect
+                    )
+                    pp = lastpp
+                else:
+                    pp = StdOutStdErrEmulationProtocol(
+                        self.protocol,
+                        cmdclass,
+                        cmd["rargs"],
+                        None,
+                        lastpp,
+                        self.redirect,
+                    )
+                    lastpp = pp
+            else:
 
-                
-                    # Execute the similar command
-                    HoneypotTerminalEmulator(honeypot=self).run_command(similar_cmd, complete_similar_command)
-
-                else: 
-                    log.msg(eventid='cannypot.learning.input.failed', known=0, input=complete_cmd,
-                            format='RL unknown command: %(input)s')
-                    # Save as unknown command and then proceed with standard Cowrie part
-                    cmd = dict()
-                    cmd['command'] = cmdAndArgs[0]
-                    cmd['rargs'] = cmdAndArgs[1:]
-                    if cmd['command'] != 'exit' and cmd['command'] != 'Exit':
-                        # Add unknown commands and also all commands to store the session
-                        self.protocol.learning_env.unknown_commands.append(cmd)
-                        self.protocol.learning_env.commands_in_session.append(cmd)
-
-
-                    # COWRIE part
-
-                    # Probably no reason to be this comprehensive for just PATH...
-                    environ = copy.copy(self.environ)
-                    cmd_array = []
-                    cmd = {}
-                    while cmdAndArgs:
-                        piece = cmdAndArgs.pop(0)
-                        if piece.count("="):
-                            key, value = piece.split("=", 1)
-                            environ[key] = value
-                            continue
-                        cmd["command"] = piece
-                        cmd["rargs"] = []
-                        break
-
-                    if "command" not in cmd or not cmd["command"]:
-                        self.runOrPrompt()
-                        return
-
-                    pipe_indices = [i for i, x in enumerate(cmdAndArgs) if x == "|"]
-                    multipleCmdArgs = []
-                    pipe_indices.append(len(cmdAndArgs))
-                    start = 0
-
-                    # Gather all arguments with pipes
-                    for index, pipe_indice in enumerate(pipe_indices):
-                        multipleCmdArgs.append(cmdAndArgs[start:pipe_indice])
-                        start = pipe_indice + 1
-
-                    cmd["rargs"] = parse_arguments(multipleCmdArgs.pop(0))
-                    # parse_file_arguments parses too much. should not parse every argument
-                    # cmd['rargs'] = parse_file_arguments(multipleCmdArgs.pop(0))
-                    cmd_array.append(cmd)
-                    cmd = {}
-
-                    for index, value in enumerate(multipleCmdArgs):
-                        cmd["command"] = value.pop(0)
-                        cmd["rargs"] = parse_arguments(value)
-                        cmd_array.append(cmd)
-                        cmd = {}
-
-                    lastpp = None
-
-                    for index, cmd in reversed(list(enumerate(cmd_array))):
-                        cmdclass = self.protocol.getCommand(
-                        cmd["command"], environ["PATH"].split(":")
-                        )
-                        if cmdclass:
-                            log.msg(
-                                input=cmd["command"] + " " + " ".join(cmd["rargs"]),
-                                format="Command found: %(input)s",
-                            )
-                            if index == len(cmd_array) - 1:
-                                lastpp = StdOutStdErrEmulationProtocol(
-                                        self.protocol, cmdclass, cmd["rargs"], None, None, self.redirect
-                                )
-                                pp = lastpp
-                            else:
-                                pp = StdOutStdErrEmulationProtocol(
-                                    self.protocol,
-                                    cmdclass,
-                                    cmd["rargs"],
-                                    None,
-                                    lastpp,
-                                    self.redirect,
-                                )
-                                lastpp = pp
-                        else:
-
-                            log.msg(
-                                eventid="cowrie.command.failed",
-                                input=" ".join(cmd2),
-                                format="Command not found: %(input)s",
-                            )
-                            self.protocol.terminal.write(
-                                "-bash: {}: command not found\n".format(cmd["command"]).encode(
-                                    "utf8"
-                                )
-                            )
-                            self.runOrPrompt()
-                            pp = None  # Got a error. Don't run any piped commands
-                            break
-                    if pp:
-                        self.protocol.call_command(pp, cmdclass, *cmd_array[0]["rargs"])
+                log.msg(
+                    eventid="cowrie.command.failed",
+                    input=" ".join(cmd2),
+                    format="Command not found: %(input)s",
+                )
+                self.protocol.terminal.write(
+                    "-bash: {}: command not found\n".format(cmd["command"]).encode(
+                        "utf8"
+                    )
+                )
+                self.runOrPrompt()
+                pp = None  # Got a error. Don't run any piped commands
+                break
+        if pp:
+            self.protocol.call_command(pp, cmdclass, *cmd_array[0]["rargs"])
 
     def resume(self):
         if self.interactive:

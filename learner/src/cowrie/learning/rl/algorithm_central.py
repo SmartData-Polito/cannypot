@@ -7,6 +7,7 @@ import csv
 import pickle
 import os
 import json
+import shutil
 import hashlib
 import time
 from cowrie.learning.rl.commands import LearningDictionary
@@ -35,36 +36,34 @@ class CentralAlgorithm:
         self.cumulative_reward = 0
         self.episode = 0
         self.runs = 0
-        self.dict_update_period = int(CowrieConfig.get('dictionary', 'dict_update_frequency'))  # TODO what's the purpose of this variable if it is never used?
+        #self.dict_update_period = int(CowrieConfig.get('dictionary', 'dict_update_frequency'))  # TODO what's the purpose of this variable if it is never used?
         learning_state_file = CowrieConfig.get('learning', 'learning_state')
 
         # Initialize them also before the try catch
         self.q_table = {}
         self.command_dict = LearningDictionary()
 
-        try:
-            self.loadLearningState(learning_state_file)
-        except FileNotFoundError:
+        if not self.loadLearningState(learning_state_file):
             self.q_table = {}
             self.command_dict = LearningDictionary()
-        finally:
-            # Queue for managing modifications of the q-table and new commands
 
-            print("Command dictionary is ", self.command_dict)
+            
+        # Queue for managing modifications of the q-table and new commands
+        #log.msg("Command dictionary is", self.command_dict)
 
-            self.modification_queue = Queue()
+        self.modification_queue = Queue()
 
-            # Worker thread extracts from queue and works
-            self.worker_queue = threading.Thread(target=self._handleAfterEpisodeTasks, args=(self.modification_queue,))
-            self.worker_queue.setDaemon(True)
-            self.worker_queue.start()
-            self.lock = threading.Lock()
-            self.lookForNewOutputs(self.command_dict)
-            self.saveLearningState(learning_state_file, self.q_table, self.command_dict)
+        # Worker thread extracts from queue and works
+        self.worker_queue = threading.Thread(target=self._handleAfterEpisodeTasks, args=(self.modification_queue,))
+        self.worker_queue.setDaemon(True)
+        self.worker_queue.start()
+        self.lock = threading.Lock()
+        self.lookForNewOutputs(self.command_dict)
+        self.saveLearningState(learning_state_file, self.q_table, self.command_dict)
 
-            if CowrieConfig.getboolean('learning', 'save_dict_and_q_table'):
-                freq = CowrieConfig.getint('learning', 'save_dict_and_q_table_frequency')
-                task.LoopingCall(self.save_dict_q_table).start(freq)
+        if CowrieConfig.getboolean('learning', 'save_dict_and_q_table'):
+            freq = CowrieConfig.getint('learning', 'save_dict_and_q_table_frequency')
+            task.LoopingCall(self.save_dict_q_table).start(freq)
 
     def save_dict_q_table(self):
         output_dir = CowrieConfig.get('learning', 'output_dir')
@@ -110,18 +109,8 @@ class CentralAlgorithm:
 
             # Save the entire session if unknown commands are present
             if new_command_list:
-                complete_cmd_list = []
-                # Convert into list of commands (no dictionary)
-                for command in commands_in_session_list:
-                    # Save every command in session
-                    # So that it can be reproduced in the explorer
-                    cmd = command['command']
-                    cmd += ' '
-                    cmd += ' '.join(command['rargs'])
-                    complete_cmd_list.append(cmd)
-
                 # Generate filename hashing the entire session (;)
-                full_session = ";".join(complete_cmd_list)
+                full_session = ";".join(commands_in_session_list)
                 filename = new_commands_dir + hashlib.md5(full_session.encode('utf-8')).hexdigest()
 
                 # Check if file already exists
@@ -131,7 +120,7 @@ class CentralAlgorithm:
                 else: 
                     # If not exist, write the file joining commands with \n
                     with open(filename, 'w') as file:
-                        file.write("\n".join(complete_cmd_list))
+                        file.write("\n".join(commands_in_session_list))
                         file.write("\n")
                     log.msg(eventid='cannypot.manager', input=filename,
                             format='New unknown session file created: %(input)s')
@@ -217,13 +206,38 @@ class CentralAlgorithm:
     def insertJobInQueue(self, job):
         self.modification_queue.put(job)
 
-    def loadLearningState(self, inputFile):
+    def loadState(self, inputFile):
         with open(inputFile, 'rb') as f:
             state_list = pickle.load(f)
             log.msg("Reading saved state file")
             log.msg(state_list)
             self.q_table = state_list[0]
-            self.command_dict = state_list[1]
+            self.command_dict = state_list[1] 
+
+
+    def loadLearningState(self, inputFile):
+        backup_tried = False
+        try: 
+            if pathlib.Path(inputFile).is_file():
+                self.loadState(inputFile)
+                return True
+            elif pathlib.Path(inputFile+".backup").is_file():
+                log.msg("Saved state file not found. Trying to load backup file")
+                backup_tried = True
+                self.loadState(inputFile+".backup")
+                return True
+        except EOFError as e:
+            if backup_tried:
+                log.msg("EOFError in loadLearningState while loading backup file")
+            else: 
+                log.msg("EOFError in loadLearningState. Trying to load backup file")
+                try:
+                    self.loadState(inputFile+".backup")
+                    return True
+                except EOFError as e:
+                    return False
+        return False
+                
 
     def updateLearningParams(self):
         self.q_table.clear()
@@ -255,7 +269,7 @@ class CentralAlgorithm:
                 info_file.close()
             if not cmds_dict.isCommandInDict(complete_cmd):
                 cmds_dict.addCommandInDict(complete_cmd)
-                os.mkdir(dict_dir_path + hash_cmd)
+                pathlib.Path(dict_dir_path + hash_cmd).mkdir(exist_ok=True)
                 # Check if info.txt and index.txt exist and in case move them
                 if os.path.isfile(new_outputs_dir + hash_cmd + '/info.txt'):
                     os.replace(new_outputs_dir + hash_cmd + '/info.txt', dict_dir_path + hash_cmd + '/info.txt')  # I am keeping info.txt because could be useful
@@ -277,9 +291,18 @@ class CentralAlgorithm:
                     format='New outputs for cmd: %(input)s')
 
     def saveLearningState(self, outputFile, q_table, command_dict):
+        # Adding a backup system in order to recover if the honeypot breaks while saving the learning state
         state_dir = CowrieConfig.get('learning', 'learning_state_dir')
         # TODO check what's saved here and if it is saved correctly: for now seems to be
         log.msg("Saving state")
         pathlib.Path(state_dir).mkdir(exist_ok=True)
+
+        if pathlib.Path(outputFile).is_file():
+            #if file already exists:
+            # temporarily store in another overwriting
+            # force overwrite
+            shutil.copy(outputFile, outputFile + '.backup')
+            # If dst is a directory, a file is created (or overwritten)
+
         with open(outputFile, 'wb') as f:
             pickle.dump([q_table, command_dict], f, pickle.HIGHEST_PROTOCOL)

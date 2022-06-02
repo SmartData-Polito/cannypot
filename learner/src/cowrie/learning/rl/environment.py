@@ -30,7 +30,7 @@ class LearningEnv:
         log.msg(eventid='cannypot.manager', format="Reinforcement learning logic for the session initialized")
         log.msg(eventid='cannypot.learning.episode', format='RL episode started')
 
-    def command_received(self, command, args):
+    def command_received(self, complete_cmd):
 
         def produce_state(state_arr):
             state_model = CowrieConfig.get('learning', 'reinforcement_state')
@@ -57,10 +57,10 @@ class LearningEnv:
         '''
 
         # Generate a complete commands starting from cmd and args
-        complete_cmd = command
-        for arg in args:
-            complete_cmd += ' '
-            complete_cmd += arg
+        #complete_cmd = command
+        #for arg in args:
+        #    complete_cmd += ' '
+        #    complete_cmd += arg
         log.msg(eventid='cannypot.learning.input', input=complete_cmd, format='RL received command: %(input)s')
 
         # TODO What if the received command is the parsed one? Should I update the q table? Also if I answered with that output?
