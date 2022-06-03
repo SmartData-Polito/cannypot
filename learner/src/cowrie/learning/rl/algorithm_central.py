@@ -73,9 +73,12 @@ class CentralAlgorithm:
         # Update dict while saving history of qtable
         dict_filename = '%sckb/dictionary/dict.json'  % (output_dir)
         q_table_filename = '%sqtable/q_table-%s.json' % (output_dir, time.strftime('%Y%m%d-%H%M%S'))
+        log.msg("Saving dict and qtable")
         with open(dict_filename, 'w') as file:
+            log.msg("Len command_dict.outputs", len(self.command_dict.outputs))
             json.dump(self.command_dict.outputs, file, indent=4)
         with open(q_table_filename, 'w') as file2:
+            log.msg("Len qtable", len(self.q_table))
             json.dump(self.q_table, file2, indent=4)
 
     def _handleJob(self, job):
@@ -276,6 +279,8 @@ class CentralAlgorithm:
                 if os.path.isfile(new_outputs_dir + hash_cmd + '/index.txt'):
                     os.replace(new_outputs_dir + hash_cmd + '/index.txt', dict_dir_path + hash_cmd + '/index.txt')  # I am keeping index.txt because could be useful
             for out_file in os.listdir(new_outputs_dir + hash_cmd):
+                if out_file == 'info.txt' or out_file == 'index.txt':
+                    continue
                 # TODO It could check here if empty or if it is the same as the other outputs!!
                 if CowrieConfig.getint('dictionary', 'max_outputs_for_command') > cmds_dict.getNumOutputsForCommand(complete_cmd):
                     cmds_dict.addOutputForCommand(complete_cmd, out_file)
