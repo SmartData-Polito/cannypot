@@ -49,6 +49,6 @@ Now, you can stop the container and re-run it specifying the volumes (use port 2
 sudo docker run -dti --memory="500m" -p 22:2222 -v /data/cannypot/var:/opt/learner/cowrie/var -v /data/cannypot/etc:/opt/learner/cowrie/etc cannypot_image
 ```
 
-**Warning**: if you use volumes before copying the directories as specified before, the run operation overrides the whole content of `etc` and `var` folders, making you loose the configuration information. 
+**Warning**: if you use volumes before copying the directories as specified before, the run operation overrides the whole content of `etc` and `var` folders, making you lose the configuration information. 
 
 
