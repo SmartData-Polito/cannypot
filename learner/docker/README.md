@@ -41,7 +41,7 @@ sudo docker cp cannypot_container:/opt/learner/cowrie/var /data/cannypot/
 sudo chown -R 1500:1500 /data/cannypot/etc/ /data/cannypot/var/
 ```
 
-This will copy var and etc directories inside `/data/cannypot/` directory, so that they can be used as volumes later. Note that uuid 1500 is the user cowrie specified inside the Dockerfile.
+This will copy `var` and `etc` directories inside `/data/cannypot/` directory, so that they can be used as volumes later. Note that uuid 1500 is the user cowrie specified inside the Dockerfile.
 
 Now, you can stop the container and re-run it specifying the volumes (use port 2222 instead of 22 if it is already in use by ssh): 
 
