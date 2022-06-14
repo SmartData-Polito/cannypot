@@ -1,6 +1,6 @@
-# This Dockerfile contains the image for Cannypot
-# Decide your configuration of Cannypot before building the image
-# Run this dockerfile using the guide inside docker/README
+# This Dockerfile builds the image of Cannypot Learner
+# You should decide your configuration of the Learner before building the image in etc/cowrie.cfg
+# Build and run the docker image using the guide inside docker/README
 
 ARG http_proxy
 ARG https_proxy
@@ -20,10 +20,6 @@ ENV COWRIE_GROUP=cowrie \
     COWRIE_HOME=/opt/learner
 
 
-
-# Not working locales
-#RUN apt-get install -y locales locales-all
-
 # Set locale to UTF-8, otherwise upstream libraries have bytes/string conversion issues
 ENV LC_ALL=en_US.UTF-8 \
     LANG=en_US.UTF-8 \
@@ -42,8 +38,7 @@ RUN groupadd -r ${COWRIE_GROUP} && \
     useradd -u 1500 -r -d ${COWRIE_HOME} -m -g ${COWRIE_GROUP} ${COWRIE_USER}
 
 
-# Are all these packages necessary?
-# Set up Debian prereqs
+# Set up prereqs
 RUN export DEBIAN_FRONTEND=noninteractive; \
       apt-get -y update && \
       apt-get -y upgrade && \  
@@ -63,7 +58,7 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
       git \
       build-essential \
       python3-virtualenv \
-      # Added vim for modifying code directly inside the container
+      # Added vim for modifying code and/or configurations directly inside the container
       vim \
       libsnappy-dev && \
     rm -rf /var/lib/apt/lists/*
@@ -79,9 +74,10 @@ RUN chmod +x ./$WORKDIR/learner/install_learner.sh && ./$WORKDIR/learner/install
 WORKDIR ${COWRIE_HOME}
 
 
-# All necessary data to persit should be here
-# I want to map them into /data/cannypot/var/log and /data/cannypot/etc
-# Copy the initial content (to know the configuration of cannypot) and then run with volumes in the run command
+# All data that need to persit should be here: "/opt/learner/cowrie/var", "/opt/learner/cowrie/etc"
+# If you want to persist data, you need to run the image specifying the volumes
+# So that you can map them to the volumes (e.g., "/data/cannypot/var" and "/data/cannypot/etc")
+# Before you need to copy the initial content of these folders (follow docker/README instructions)
 
 
 RUN chown -R ${COWRIE_USER}:${COWRIE_USER} /opt/learner/cowrie/var/ && \
@@ -96,11 +92,8 @@ ENV PATH=${COWRIE_HOME}/cannypot-env/bin:${PATH}
 ENV PYTHONPATH=${COWRIE_HOME}/cowrie/src
 ENV PYTHONUNBUFFERED=1
 
-#ENTRYPOINT [ "/cowrie/cowrie-env/bin/python3" ]
-#CMD [ "/opt/learner/cowrie/bin/cowrie", "start"]
-
 ENTRYPOINT [ "/opt/learner/cannypot-env/bin/python3" ]
-#CMD [ "/opt/learner/cannypot-env/bin/twistd", "-n", "--umask=0022", "--pidfile=" , "cowrie" ]
 CMD [ "/opt/learner/cannypot-env/bin/twistd", "-n", "--umask=0022", "--pidfile=", "--logger", "cowrie.python.logfile.logger" , "cowrie" ]
 
+# Probably only 2222 is useful
 EXPOSE 2222 2223
