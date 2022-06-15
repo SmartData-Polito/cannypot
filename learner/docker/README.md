@@ -46,7 +46,7 @@ This will copy `var` and `etc` directories inside `/data/cannypot/` directory, s
 Now, you can stop the container and re-run it specifying the volumes (use port 2222 instead of 22 if it is already in use by ssh): 
 
 ```
-sudo docker run -dti --memory="500m" -p 22:2222 -v /data/cannypot/var:/opt/learner/cowrie/var -v /data/cannypot/etc:/opt/learner/cowrie/etc cannypot_image
+sudo docker run -dti -p 22:2222 -v /data/cannypot/var:/opt/learner/cowrie/var -v /data/cannypot/etc:/opt/learner/cowrie/etc cannypot_image
 ```
 
 **Warning**: if you use volumes before copying the directories as specified before, the run operation overrides the whole content of `etc` and `var` folders, making you lose the configuration information. 
