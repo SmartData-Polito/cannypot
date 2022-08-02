@@ -1,0 +1,14 @@
+version: '3'
+
+services:
+  cannypot_validation:
+#    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "2222:2222"
+      - "2223:2223"
+    volumes:
+#      - ./data/cannypot/etc:/opt/learner/cowrie/etc
+      - ./data/cannypot/logs:/opt/learner/cowrie/var/log/cowrie
