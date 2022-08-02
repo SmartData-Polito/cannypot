@@ -23,7 +23,11 @@ To run the image on port 22 (if it is not already in use by ssh):
 sudo docker run -dti --name cannypot_container -p 22:2222 cannypot_image
 ```
 
-## Data Persistency: Volumes
+## Data Persistency
+
+For providing data persistency once the container is stopped we propose using volumes (saving both configurations and all logs files from Cannypot) or docker compose (for now this solution only saves cowrie-style Cannypot logs, not logs regarding the RL nor the CKB).
+
+### Data Persistency: Volumes
 
 If you want to persist logs and config information, you need to use volumes. To do so, you need to save config information **before** running the image with volumes.
 
@@ -52,3 +56,18 @@ sudo docker run -dti -p 22:2222 -v /data/cannypot/var:/opt/learner/cowrie/var -v
 **Warning**: if you use volumes before copying the directories as specified before, the run operation overrides the whole content of `etc` and `var` folders, making you lose the configuration information. 
 
 
+### Data Persistency: Docker compose
+
+If you want to build the image and persist only cowrie-style logs with just one command, create a folder named `logs` (e.g., `/data/cannypot/logs`) in your filesystem and map it inside the `docker-compose.yml` file, then you can run from the `learner/` directory:
+
+```
+sudo docker-compose build
+```
+
+To run the image:
+
+```
+sudo docker-compose up
+```
+
+If you want to change the folder where to save the honeypot logs, you need to specify the path into the `docker-compose.yml` file.
