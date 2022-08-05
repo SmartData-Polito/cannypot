@@ -58,7 +58,13 @@ sudo docker run -dti -p 22:2222 -v /data/cannypot/var:/opt/learner/cowrie/var -v
 
 ### Data Persistency: Docker compose
 
-If you want to build the image and persist only cowrie-style logs with just one command, create a folder named `logs` (e.g., `/data/cannypot/logs`) in your filesystem and map it inside the `docker-compose.yml` file, then you can run from the `learner/` directory:
+If you want to build the image and persist only cowrie-style logs with just one command, create a folder named `logs` (e.g., `/data/cannypot/logs`) in your filesystem and map it inside the `docker-compose.yml` file. You need to modify the ownership with:
+
+```
+sudo chown -R 1500:1500 /data/cannypot/logs
+```
+
+Then you can run from the `learner/` directory:
 
 ```
 sudo docker-compose build
@@ -71,3 +77,5 @@ sudo docker-compose up
 ```
 
 If you want to change the folder where to save the honeypot logs, you need to specify the path into the `docker-compose.yml` file.
+
+**Note** that if you don't change the ownership of the shared folder, the user running cowrie inside docker will not have access to the folder for saving logs, and it will fail with a permission denied error.
