@@ -2,6 +2,7 @@
 # Copyright (c) 2009-2014 Upi Tamminen <desaster@gmail.com>
 # See the COPYRIGHT file for more information
 
+from __future__ import annotations
 
 import os
 import socket
@@ -51,12 +52,12 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.hostname: str = user.server.hostname
         self.fs = user.server.fs
         self.pp = None
-        self.logintime = None
-        self.realClientIP = None
-        self.realClientPort = None
-        self.kippoIP = None
-        self.clientIP = None
-        self.sessionno = None
+        self.logintime: float
+        self.realClientIP: str
+        self.realClientPort: int
+        self.kippoIP: str
+        self.clientIP: str
+        self.sessionno: int
         self.factory = None
 
         if self.fs.exists(user.avatar.home):
@@ -83,9 +84,6 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.factory.logDispatch(**args)
 
     def connectionMade(self):
-        '''
-        NEW LEARNING EPISODE
-        '''
         pt = self.getProtoTransport()
 
         self.factory = pt.factory
@@ -116,17 +114,10 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
             except Exception:
                 self.kippoIP = "192.168.0.1"
 
-
     def timeoutConnection(self):
         """
         this logs out when connection times out
         """
-
-        # TODO is this useful?
-        log.msg("Timeout connection in protocol.py")
-        #if CowrieConfig.getboolean('learning', 'reinforcement_mode'):
-        #    self.learning_env.connection_closed_dirty()
-
         ret = failure.Failure(error.ProcessTerminated(exitCode=1))
         self.terminal.transport.processEnded(ret)
 
@@ -144,14 +135,6 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.pp = None
         self.user = None
         self.environ = None
-
-
-        log.msg("Connection lost in protocol.py")
-        # TODO why this line is commented???
-        #if CowrieConfig.getboolean('learning', 'reinforcement_mode'):
-        #    self.learning_env.connection_closed_dirty()
-
-        #self.learning_env = None
 
     def txtcmd(self, txt):
         class Command_txtcmd(command.HoneyPotCommand):
@@ -314,7 +297,7 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
     def connectionLost(self, reason):
         HoneyPotBaseProtocol.connectionLost(self, reason)
         recvline.HistoricRecvLine.connectionLost(self, reason)
-        self.keyHandlers = None
+        self.keyHandlers = {}
 
     def initializeScreen(self):
         """

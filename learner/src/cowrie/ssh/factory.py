@@ -5,13 +5,14 @@
 This module contains ...
 """
 
+from __future__ import annotations
 
-import time
 from configparser import NoOptionError
-from typing import Optional
+import time
+from typing import Dict, Optional
 
 from twisted.conch.openssh_compat import primes
-from twisted.conch.ssh import factory, keys
+from twisted.conch.ssh import factory, keys, transport
 from twisted.cred import portal as tp
 from twisted.python import log
 
@@ -24,7 +25,7 @@ from cowrie.ssh_proxy import server_transport as proxyTransport
 from cowrie.ssh_proxy.userauth import ProxySSHAuthServer
 from cowrie.learning.rl.algorithm_handler import LearningAlgHandler
 
-# object is added for Python 2.7 compatibility (#1198) - as is super with args
+
 class CowrieSSHFactory(factory.SSHFactory):
     """
     This factory creates HoneyPotSSHTransport instances
@@ -32,11 +33,10 @@ class CowrieSSHFactory(factory.SSHFactory):
     """
 
     starttime: Optional[float] = None
-    privateKeys = None
-    publicKeys = None
+    privateKeys: Dict[bytes, bytes] = {}
+    publicKeys: Dict[bytes, bytes] = {}
     primes = None
     portal: Optional[tp.Portal] = None  # gets set by plugin
-    tac = None  # gets set later
     ourVersionString: str = CowrieConfig.get(
         "ssh", "version", fallback="SSH-2.0-OpenSSH_6.0p1 Debian-4+deb7u2"
     )
@@ -60,7 +60,7 @@ class CowrieSSHFactory(factory.SSHFactory):
         Special delivery to the loggers to avoid scope problems
         """
         args["sessionno"] = "S{}".format(args["sessionno"])
-        for output in self.tac.output_plugins:
+        for output in self.tac.output_plugins:  # type: ignore[attr-defined]
             output.logDispatch(**args)
 
     def startFactory(self):
@@ -68,33 +68,28 @@ class CowrieSSHFactory(factory.SSHFactory):
         self.starttime = time.time()
 
         # Load/create keys
-        self.publicKeys = {}
-        self.privateKeys = {}
         try:
             public_key_auth = [
-                i.encode("utf-8") for i in CowrieConfig.get("ssh", "public_key_auth").split(",")
+                i.encode("utf-8")
+                for i in CowrieConfig.get("ssh", "public_key_auth").split(",")
             ]
         except NoOptionError:
             # no keys defined, use the three most common pub keys of OpenSSH
-            public_key_auth = [
-                b"ssh-rsa",
-                b"ecdsa-sha2-nistp256",
-                b"ssh-ed25519"
-            ]
+            public_key_auth = [b"ssh-rsa", b"ecdsa-sha2-nistp256", b"ssh-ed25519"]
         for key in public_key_auth:
-            if key == b'ssh-rsa':
+            if key == b"ssh-rsa":
                 rsaPubKeyString, rsaPrivKeyString = cowriekeys.getRSAKeys()
                 self.publicKeys[key] = keys.Key.fromString(data=rsaPubKeyString)
                 self.privateKeys[key] = keys.Key.fromString(data=rsaPrivKeyString)
-            elif key == b'ssh-dss':
+            elif key == b"ssh-dss":
                 dsaaPubKeyString, dsaPrivKeyString = cowriekeys.getDSAKeys()
                 self.publicKeys[key] = keys.Key.fromString(data=dsaaPubKeyString)
                 self.privateKeys[key] = keys.Key.fromString(data=dsaPrivKeyString)
-            elif key == b'ecdsa-sha2-nistp256':
+            elif key == b"ecdsa-sha2-nistp256":
                 ecdsaPuKeyString, ecdsaPrivKeyString = cowriekeys.getECDSAKeys()
                 self.publicKeys[key] = keys.Key.fromString(data=ecdsaPuKeyString)
                 self.privateKeys[key] = keys.Key.fromString(data=ecdsaPrivKeyString)
-            elif key == b'ssh-ed25519':
+            elif key == b"ssh-ed25519":
                 ed25519PubKeyString, ed25519PrivKeyString = cowriekeys.geted25519Keys()
                 self.publicKeys[key] = keys.Key.fromString(data=ed25519PubKeyString)
                 self.privateKeys[key] = keys.Key.fromString(data=ed25519PrivKeyString)
@@ -133,6 +128,7 @@ class CowrieSSHFactory(factory.SSHFactory):
         @rtype: L{cowrie.ssh.transport.HoneyPotSSHTransport}
         @return: The built transport.
         """
+        t: transport.SSHServerTransport
         if self.backend == "proxy":
             t = proxyTransport.FrontendSSHTransport()
         else:

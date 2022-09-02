@@ -2,6 +2,8 @@
 # See the COPYRIGHT file for more information
 
 
+from __future__ import annotations
+
 from zope.interface import implementer
 
 from twisted.conch import avatar
@@ -57,7 +59,6 @@ class CowrieUser(avatar.ConchUser):
             self.channelLookup[
                 b"direct-tcpip"
             ] = forwarding.cowrieOpenConnectForwardingClient
-
 
     def logout(self) -> None:
         log.msg(f"avatar {self.username} logging out")

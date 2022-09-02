@@ -26,10 +26,11 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+from __future__ import annotations
 
 from zope.interface import implementer
 
-from twisted.conch import interfaces as conchinterfaces
+from twisted.conch.interfaces import IConchUser
 from twisted.conch.telnet import ITelnetProtocol
 from twisted.cred.portal import IRealm
 
@@ -38,14 +39,14 @@ from cowrie.shell import server as shellserver
 from cowrie.telnet import session
 
 
-
 @implementer(IRealm)
 class HoneyPotRealm:
     def __init__(self, l_handler=None) -> None:
         self.learning_handler = l_handler
 
     def requestAvatar(self, avatarId, mind, *interfaces):
-        if conchinterfaces.IConchUser in interfaces:
+        user: IConchUser
+        if IConchUser in interfaces:
             serv = shellserver.CowrieServer(self)
             user = shellavatar.CowrieUser(avatarId, serv, self.learning_handler)
             return interfaces[0], user, user.logout
