@@ -1,6 +1,6 @@
 #!/bin/bash
 
-COWRIE="tags/v2.3.0"
+COWRIE="tags/v2.4.0"
 
 set -e
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
